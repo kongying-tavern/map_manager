@@ -1,0 +1,17 @@
+.app-main {
+    width: 100%;
+    position: relative;
+}
+.echarts {
+    width: 100% !important;
+    height: 100% !important;
+}
+.main-content{
+    height: 100%;
+    background-color: #fcfcff;
+}
+
+aside {
+  top: 86px;
+}
+

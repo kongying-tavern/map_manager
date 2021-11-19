@@ -1,9 +1,8 @@
 //点位相关
-import * as L from 'leaflet'
-import "leaflet/dist/leaflet.css";
-import "leaflet.markercluster/dist/MarkerCluster.css"
-import "leaflet.markercluster/dist/MarkerCluster.Default.css"
-import "leaflet.markercluster";
+import "../api/leaflet_markercluster/leaflet.markercluster-src.js";
+import "../api/leaflet_markercluster/MarkerCluster.css"
+import "../api/leaflet_markercluster/MarkerCluster.Default.css"
+
 //点位图标参数
 const icon_info_list = {
     chest_icon: L.Icon.extend({

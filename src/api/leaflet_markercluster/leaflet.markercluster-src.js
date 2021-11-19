@@ -2789,7 +2789,8 @@
 			return this;
 		}
 	});
-	export { MarkerClusterGroup }
+	exports.MarkerClusterGroup = MarkerClusterGroup;
+	exports.MarkerCluster = MarkerCluster;
 })));
 
 //# sourceMappingURL=leaflet.markercluster-src.js.map

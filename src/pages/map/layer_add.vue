@@ -100,28 +100,12 @@
     <q-dialog v-model="cropper_window">
       <div class="cropper_containor">
         <div class="cropper_area">
-          <vueCropper
-            ref="cropper"
-            :img="crooper_img"
-            :outputSize="option.size"
-            :outputType="option.outputType"
-            :info="true"
-            :autoCropWidth="option.autoCropWidth"
-            :autoCropHeight="option.autoCropHeight"
-            :canMove="option.canMove"
-            :canMoveBox="option.canMoveBox"
-            :original="option.original"
-            :autoCrop="option.autoCrop"
-            :centerBox="option.centerBox"
-            :infoTrue="option.infoTrue"
-            :fixed="option.fixed"
-            :fixedBox="option.fixedBox"
-          ></vueCropper>
+          <img-cut :crooper_img="crooper_img"></img-cut>
         </div>
       </div>
     </q-dialog>
     <q-dialog v-model="table_list_window" seamless position="bottom">
-      <q-card style="width: 50vw; height: 40vh"> </q-card>
+      <q-card style="width: 50vw; height: 40vh"></q-card>
     </q-dialog>
   </base-content>
 </template>
@@ -132,9 +116,9 @@ import BaseContent from "../../components/BaseContent/BaseContent";
 import { layer_data_select } from "../../services/map_request";
 import { initmap } from "../../api/map";
 import { layergroup_register } from "../../api/layer";
-import LayerSelect from "../../components/map/layer_select.vue";
-import PopupWindow from "../../components/map/popup_window.vue";
-import { VueCropper } from "vue-cropper";
+import LayerSelect from "../../components/map/layer/layer_select.vue";
+import PopupWindow from "../../components/map/layer/popup_window.vue";
+import ImgCut from "../../components/map/layer/img_crooper.vue";
 export default {
   data() {
     return {
@@ -155,28 +139,12 @@ export default {
       layer_img: require("../../assets/img/default.png"),
       upload_img: null,
       crooper_img: null,
-      // 裁剪组件的基础配置option
-      option: {
-        info: true, // 裁剪框的大小信息
-        outputSize: 1, // 裁剪生成图片的质量
-        outputType: "jpeg", // 裁剪生成图片的格式
-        canScale: true, // 图片是否允许滚轮缩放
-        autoCrop: true, // 是否默认生成截图框
-        autoCropWidth: 512, // 默认生成截图框宽度
-        autoCropHeight:512, // 默认生成截图框高度
-        fixed: true,
-        fixedBox: false, // 固定截图框大小 不允许改变
-        canMoveBox: true, // 截图框能否拖动
-        original: true, // 上传图片按照原始比例渲染
-        centerBox: true, // 截图框是否被限制在图片里面
-        infoTrue: false, // true 为展示真实输出图片宽高 false 展示看到的截图框宽高
-      },
     };
   },
   components: {
     BaseContent,
     LayerSelect,
-    VueCropper,
+    ImgCut,
   },
   methods: {
     layer_draw(val) {
@@ -330,8 +298,7 @@ export default {
   height: 75vh;
   background: #fff;
 }
-.cropper_area
-{
+.cropper_area {
   position: absolute;
   left: 0;
   top: 0;
@@ -339,6 +306,7 @@ export default {
   height: 100%;
 }
 </style>
+
 <style>
 #popup_window {
   width: 300px;

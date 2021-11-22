@@ -1,4 +1,6 @@
 //点位相关
+import * as L from 'leaflet'
+import "leaflet/dist/leaflet.css";
 import "../api/leaflet_markercluster/leaflet.markercluster-src.js";
 import "../api/leaflet_markercluster/MarkerCluster.css"
 import "../api/leaflet_markercluster/MarkerCluster.Default.css"

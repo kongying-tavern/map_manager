@@ -62,7 +62,7 @@
 import {
   layer_keyword_select,
   options_type_select,
-} from "../../services/map_request";
+} from "../../../services/map_request";
 export default {
   name: "LayerSelect",
   data() {

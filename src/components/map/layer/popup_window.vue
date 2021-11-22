@@ -20,7 +20,7 @@
 <script>
 //由于未在父组件使用，所以无法使用this.$store来指向全局的Vuex.Store对象
 //故这里需要主动调用全局的Vuex.Store对象来使用vuex
-import store from "../../store/index";
+import store from "../../../store/index";
 export default {
   name: "PopupWindow",
   data() {

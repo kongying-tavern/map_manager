@@ -12,6 +12,10 @@
           <q-toggle v-model="table_list_window" size="50px" />
           <span class="edit_text">列表模式</span>
         </div>
+        <div v-show="select_layer_id == null ? false : true">
+          <q-toggle v-model="add_mode" size="50px" />
+          <span class="edit_text">打点模式</span>
+        </div>
       </div>
 
       <!-- 地图容器 -->
@@ -34,7 +38,7 @@
         </q-inner-loading>
       </q-card>
     </transition>
-    <!-- 点位编辑弹窗 -->
+    <!-- 点位弹窗 -->
     <q-dialog v-model="layer_window">
       <q-card>
         <q-card-section>
@@ -78,7 +82,6 @@
                   max-file-size="5242880"
                   accept="image/png, image/jpeg"
                   @rejected="onRejected"
-                  @input="file_switch"
                 />
               </q-item-section>
             </q-item>
@@ -98,11 +101,7 @@
     </q-dialog>
     <!-- 图片裁剪弹窗 -->
     <q-dialog v-model="cropper_window">
-      <div class="cropper_containor">
-        <div class="cropper_area">
-          <img-cut :crooper_img="crooper_img"></img-cut>
-        </div>
-      </div>
+      <img-cut :crooper_img="crooper_img" @screenshot="cut_img"></img-cut>
     </q-dialog>
     <q-dialog v-model="table_list_window" seamless position="bottom">
       <q-card style="width: 50vw; height: 40vh"></q-card>
@@ -115,7 +114,7 @@ import Vue from "vue";
 import BaseContent from "../../components/BaseContent/BaseContent";
 import { layer_data_select } from "../../services/map_request";
 import { initmap } from "../../api/map";
-import { layergroup_register } from "../../api/layer";
+import { layergroup_register, layer_register } from "../../api/layer";
 import LayerSelect from "../../components/map/layer/layer_select.vue";
 import PopupWindow from "../../components/map/layer/popup_window.vue";
 import ImgCut from "../../components/map/layer/img_crooper.vue";
@@ -127,13 +126,17 @@ export default {
       table_list_window: false,
       model: null,
       options: [],
-      layer_data: null,
       map_loading: false,
       layer_window: false,
       layer_data: {
         name: "",
         desc: "",
+        img: "",
       },
+      item_id: null,
+      item_list: null,
+      add_mode: false,
+      select_layer_id: null,
       cropper_window: false,
       selector_loading: false,
       layer_img: require("../../assets/img/default.png"),
@@ -147,11 +150,19 @@ export default {
     ImgCut,
   },
   methods: {
+    //在地图上绘制所选点位下的所有点位
     layer_draw(val) {
       if (val != null) {
         this.selector_loading = true;
         layer_data_select(val).then((res) => {
-          let layerdata = [
+          console.log(res);
+          if (res.data.data.length != 0) {
+            this.select_layer_id = val;
+          } else {
+            this.select_layer_id = null;
+          }
+
+          this.item_list = [
             {
               type: "FeatureCollection",
               features: [],
@@ -159,7 +170,7 @@ export default {
           ];
           //生成对应点位类型下所有点位数据的对象
           for (let i of res.data.data) {
-            layerdata[0].features.push({
+            this.item_list[0].features.push({
               geometry: {
                 type: "Point",
                 coordinates: i.position.split(","),
@@ -178,13 +189,15 @@ export default {
             this.map.removeLayer(this.callback_layer.select_Layer);
           }
           //将点位传入处理函数进行处理，返回leaflet的layer对象,同时对组件挂载
-          this.callback_layer = layergroup_register(layerdata[0], this.map);
+          this.callback_layer = layergroup_register(
+            this.item_list[0],
+            this.map
+          );
           //给点位绑定弹窗的相关处理
           this.callback_layer.select_Layer.eachLayer(function (layer) {
             //需要指定一个dom元素用于绑定组件，且需要为其指定宽度，否则leaflet弹窗无法获取容器宽度导致组件内容无法完全展示
             layer.bindPopup(`<div id="popup_window"></div>`);
             layer.on("click", function () {
-              console.log(layer.feature);
               //使用extend将popup组件挂载至popup弹窗内id为popup_window的dom对象上
               var Profile = Vue.extend(PopupWindow);
               //将对应点位的数据传入组件做进一步处理
@@ -201,16 +214,20 @@ export default {
         });
       }
     },
+    //触发选取文件事件
     upload_function() {
+      //触发选取文件事件（框架自带的文件上传器难以定义样式，故直接调用事件）
       this.$refs.img_upload.pickFiles();
     },
     //上传失败所用弹窗
     onRejected(rejectedEntries) {
       console.log(rejectedEntries[0].file.type);
+      //上传类型检测
       if (
         rejectedEntries[0].file.type != "image/png" &&
         rejectedEntries[0].file.type != "image/jpeg"
       ) {
+        //提示弹窗
         this.$q.notify({
           type: "negative",
           message: `上传的不是图片类型文件，请确认后重新上传`,
@@ -228,26 +245,64 @@ export default {
     },
     //上传后图片转换为base64
     file_switch() {
-      console.log(this.upload_img);
-      let img = this.upload_img;
-      let fr = new FileReader();
-      fr.readAsDataURL(img);
-      let that = this;
-      fr.onload = function (res) {
-        that.crooper_img = res.target.result;
-      };
-      this.cropper_window = true;
+      if (this.upload_img != null) {
+        let img = this.upload_img;
+        let fr = new FileReader();
+        fr.readAsDataURL(img);
+        fr.onload = (res) => {
+          this.crooper_img = res.target.result;
+          //在转换完成后清除file，否则当用户再次上传同一图片时，由于未触发model变化，会导致函数不被调用从而不弹出截图框
+          this.upload_img = null;
+        };
+        this.cropper_window = true;
+      }
     },
+    //截图返回函数
+    cut_img(data) {
+      this.cropper_window = false;
+      this.layer_img = data;
+    },
+    //单位操作弹窗函数
+    layer_modify(state)
+    {
+      //1为新增，2为修改
+      switch(state)
+      {
+        case 1:
+
+      }
+    }
   },
   mounted() {
+    //注册地图
     this.map = initmap(this.map);
   },
   watch: {
+    //检测文件上传事件（不使用@input，触发时间节点有差异，可能会导致奇怪的bug）
+    upload_img: function (val) {
+      if (val != null) {
+        this.file_switch();
+      }
+    },
+    //检测弹窗产生的vuex变量变化，从而触发不同的事件
     "$store.state.layer_handel_data": function (val) {
       switch (val.handel_type) {
         case 1:
           this.layer_window = true;
           break;
+      }
+    },
+    //打点函数
+    add_mode(val) {
+      if (val == true) {
+        this.map.on("click", (event) => {
+          var marker = layer_register(event.latlng, "marker");
+          marker.addTo(this.callback_layer.select_Layer).on("click", () => {
+            this.layer_window = true;
+          });
+        });
+      } else {
+        this.map.off("click");
       }
     },
   },
@@ -290,20 +345,6 @@ export default {
 }
 .layer_img:hover {
   cursor: pointer;
-}
-.cropper_containor {
-  position: relative;
-  width: 80vw;
-  max-width: 80vw;
-  height: 75vh;
-  background: #fff;
-}
-.cropper_area {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 70%;
-  height: 100%;
 }
 </style>
 

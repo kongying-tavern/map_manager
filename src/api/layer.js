@@ -7,37 +7,71 @@ import "../api/leaflet_markercluster/MarkerCluster.Default.css"
 
 //点位图标参数
 const icon_info_list = {
-    chest_icon: L.Icon.extend({
+    bordered_icon: L.Icon.extend({
         options: {
-            shadowUrl: "https://yuanshen.site/imgs/loc_stonenot.svg",
+            shadowUrl: 'https://assets.yuanshen.site/icons/loc_02_off.png',
             iconSize: [22, 22], // size of the icon
-            shadowSize: [24, 24], // size of the shadow
-            iconAnchor: [11, 11], // point of the icon which will correspond to marker's location
-            shadowAnchor: [12, 11], // the same for the shadow
-            popupAnchor: [0, -22] // point from which the popup should open relative to the iconAnch
+            shadowSize: [32, 36], // size of the shadow
+            iconAnchor: [11, 30], // point of the icon which will correspond to marker's location
+            shadowAnchor: [16, 35], // the same for the shadow
+            popupAnchor: [0, -35], // point from which the popup should open relative to the iconAnchor
         }
-    })
+    }),
+    no_bordered_icon: L.Icon.extend({
+        options: {
+            iconSize: [22, 22], // size of the icon
+            iconAnchor: [11, 11], // point of the icon which will correspond to marker's location
+            popupAnchor: [0, -22], // point from which the popup should open relative to the iconAnchor
+        }
+    }),
 }
-function layergroup_register(layerdata, map) {
+
+/**
+* 生成单个点位
+* @param {array} latlng 点位坐标参数
+* @param {string} state 调用类型，可选参数为'marker'和'group'，前者为打点新增，后者为渲染点位组中点位 
+* @returns {Object} marker对象
+ */
+function layer_register(latlng, state) {
+    let marker_order = [latlng.lat, latlng.lng];
+    switch (state) {
+        //传到数据库中的点位的渲染使用的是lng-lat（即yx轴），而打点时使用的是xy轴，故打点时生成的点位坐标的xy轴需要倒置
+        case 'marker':
+            marker_order = [latlng.lat, latlng.lng]
+            break;
+        case 'group':
+            marker_order = [latlng.lng, latlng.lat]
+            break;
+    }
+    var marker = L.marker(marker_order, {
+        icon: new icon_info_list[Object.keys(icon_info_list)[0]]({
+            className: `mark-${4}`,
+            iconUrl: "https://yuanshen.site/imgs/icon_26.svg",
+        }),
+        alt: `${latlng.lat},${latlng.lng}`,
+    });
+    return marker;
+}
+/**
+* 生成点位组
+* @param {array} layergroup_data  要生成点位的点位组对象数组
+* @param {Object} map map实例对象
+* @returns {Object} markerClusterGroup对象（聚合后的点位组）
+ */
+function layergroup_register(layergroup_data, map) {
     var layer_list = {
         select_Layer: L.markerClusterGroup(map),
     }
     var markers = {};
     //生成点位
-    L.geoJSON(layerdata, {
+    L.geoJSON(layergroup_data, {
         pointToLayer: function (feature, latlng) {
             var key = feature.id;
-            var marker = L.marker([latlng.lng, latlng.lat], {
-                icon: new icon_info_list[Object.keys(icon_info_list)[0]]({
-                    className: `mark-${4}_${feature.id}`,
-                    iconUrl: 'https://yuanshen.site/imgs/icon_26.svg'
-                }),
-                alt: `${latlng.lng},${latlng.lat}`
-            });
+            var marker = layer_register(latlng, 'group');
             markers[key] = marker;
             return marker.addTo(layer_list.select_Layer);
         },
     });
     return layer_list
 }
-export { layergroup_register }
+export { layergroup_register, layer_register }

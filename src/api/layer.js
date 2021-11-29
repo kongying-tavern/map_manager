@@ -4,38 +4,82 @@ import "leaflet/dist/leaflet.css";
 import "../api/leaflet_markercluster/leaflet.markercluster-src.js";
 import "../api/leaflet_markercluster/MarkerCluster.css"
 import "../api/leaflet_markercluster/MarkerCluster.Default.css"
-
-//点位图标参数
-const icon_info_list = {
-    bordered_icon: L.Icon.extend({
-        options: {
-            shadowUrl: 'https://assets.yuanshen.site/icons/loc_02_off.png',
-            iconSize: [22, 22], // size of the icon
-            shadowSize: [32, 36], // size of the shadow
-            iconAnchor: [11, 30], // point of the icon which will correspond to marker's location
-            shadowAnchor: [16, 35], // the same for the shadow
-            popupAnchor: [0, -35], // point from which the popup should open relative to the iconAnchor
-        }
-    }),
-    no_bordered_icon: L.Icon.extend({
-        options: {
-            iconSize: [22, 22], // size of the icon
-            iconAnchor: [11, 11], // point of the icon which will correspond to marker's location
-            popupAnchor: [0, -22], // point from which the popup should open relative to the iconAnchor
-        }
-    }),
+/**
+* 生成点位背景
+* @param {string} type 点位背景的类型 border_off：默认；border_on：选中态；none：无背景
+* @returns {Object}
+*/
+function icon_bg(type) {
+    let options = {
+        shadowUrl: 'https://assets.yuanshen.site/icons/loc_02_off.png',
+        iconSize: [22, 22], // size of the icon
+        shadowSize: [32, 36], // size of the shadow
+        iconAnchor: [11, 30], // point of the icon which will correspond to marker's location
+        shadowAnchor: [16, 35], // the same for the shadow
+        popupAnchor: [0, -35], // point from which the popup should open relative to the iconAnchor
+    };
+    switch (type) {
+        case 'border_off':
+            break;
+        case 'border_on':
+            options.shadowUrl = 'https://assets.yuanshen.site/icons/loc_02_on.png'
+            break;
+        case "none":
+            options = {
+                iconSize: [22, 22], // size of the icon
+                iconAnchor: [11, 11], // point of the icon which will correspond to marker's location
+                popupAnchor: [0, -22], // point from which the popup should open relative to the iconAnchor
+            }
+            break;
+    }
+    let icon_data = L.Icon.extend({ options });
+    return icon_data
 }
-
+/**
+* 将获取的点位组信息转化成leaflet的geojson对象
+* @param {Object} data 点位组对象信息
+* @returns {Object} geojson对象
+*/
+function create_geojson(data) {
+    let item_list = [
+        {
+            type: "FeatureCollection",
+            features: [],
+        },
+    ];
+    for (let i of data) {
+        item_list[0].features.push({
+            geometry: {
+                type: "Point",
+                coordinates: i.position.split(","),
+            },
+            type: "Feature",
+            properties: {
+                popTitle: i.title,
+                popupContent: i.content,
+            },
+            imgsrc: "",
+            id: i.id,
+        });
+    }
+    return item_list
+}
 /**
 * 生成单个点位
 * @param {array} latlng 点位坐标参数
-* @param {string} state 调用类型，可选参数为'marker'和'group'，前者为打点新增，后者为渲染点位组中点位 
+* @param {string} state 调用类型，可选参数为'marker'和'group'，前者为打点新增，后者为渲染点位组中点位
+* @param {array} group 点位组对象,用于获取点位的图标等信息
 * @returns {Object} marker对象
  */
-function layer_register(latlng, state) {
+function layer_register(latlng, state, group) {
+    //首先判断点位是有边框还是无边框类型
+    //再判断点位是否是存档中标记的点位
+    //有边框点位通过更改背景图片展示是否标记。无边框类则是更改点位图片
+    let icondata = icon_bg('border_off');
     let marker_order = [latlng.lat, latlng.lng];
     switch (state) {
         //传到数据库中的点位的渲染使用的是lng-lat（即yx轴），而打点时使用的是xy轴，故打点时生成的点位坐标的xy轴需要倒置
+        //所以打点的state传入marker，而渲染拉取的点位用group，否则在地图上展示的位置就是镜像位置
         case 'marker':
             marker_order = [latlng.lat, latlng.lng]
             break;
@@ -44,12 +88,14 @@ function layer_register(latlng, state) {
             break;
     }
     var marker = L.marker(marker_order, {
-        icon: new icon_info_list[Object.keys(icon_info_list)[0]]({
+        icon: new icondata({
             className: `mark-${4}`,
             iconUrl: "https://yuanshen.site/imgs/icon_26.svg",
+            state: 'off'
         }),
         alt: `${latlng.lat},${latlng.lng}`,
     });
+    console.log(group);
     return marker;
 }
 /**
@@ -67,11 +113,16 @@ function layergroup_register(layergroup_data, map) {
     L.geoJSON(layergroup_data, {
         pointToLayer: function (feature, latlng) {
             var key = feature.id;
-            var marker = layer_register(latlng, 'group');
+            var marker = layer_register(latlng, 'group', layergroup_data);
             markers[key] = marker;
             return marker.addTo(layer_list.select_Layer);
         },
     });
     return layer_list
 }
-export { layergroup_register, layer_register }
+export {
+    icon_bg,
+    create_geojson,
+    layer_register,
+    layergroup_register,
+}

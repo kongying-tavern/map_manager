@@ -114,7 +114,11 @@ import Vue from "vue";
 import BaseContent from "../../components/BaseContent/BaseContent";
 import { layer_data_select } from "../../services/map_request";
 import { initmap } from "../../api/map";
-import { layergroup_register, layer_register } from "../../api/layer";
+import {
+  create_geojson,
+  layer_register,
+  layergroup_register,
+} from "../../api/layer";
 import LayerSelect from "../../components/map/layer/layer_select.vue";
 import PopupWindow from "../../components/map/layer/popup_window.vue";
 import ImgCut from "../../components/map/layer/img_crooper.vue";
@@ -155,35 +159,12 @@ export default {
       if (val != null) {
         this.selector_loading = true;
         layer_data_select(val).then((res) => {
-          console.log(res);
           if (res.data.data.length != 0) {
             this.select_layer_id = val;
           } else {
             this.select_layer_id = null;
           }
-
-          this.item_list = [
-            {
-              type: "FeatureCollection",
-              features: [],
-            },
-          ];
-          //生成对应点位类型下所有点位数据的对象
-          for (let i of res.data.data) {
-            this.item_list[0].features.push({
-              geometry: {
-                type: "Point",
-                coordinates: i.position.split(","),
-              },
-              type: "Feature",
-              properties: {
-                popTitle: i.title,
-                popupContent: i.content,
-              },
-              imgsrc: "",
-              id: i.id,
-            });
-          }
+          this.item_list = create_geojson(res.data.data);
           //每次切换点位时清空地图上已有点位
           if (this.callback_layer != null) {
             this.map.removeLayer(this.callback_layer.select_Layer);
@@ -194,16 +175,17 @@ export default {
             this.map
           );
           //给点位绑定弹窗的相关处理
-          this.callback_layer.select_Layer.eachLayer(function (layer) {
+          this.callback_layer.select_Layer.eachLayer((layer) => {
             //需要指定一个dom元素用于绑定组件，且需要为其指定宽度，否则leaflet弹窗无法获取容器宽度导致组件内容无法完全展示
             layer.bindPopup(`<div id="popup_window"></div>`);
-            layer.on("click", function () {
+            layer.on("popupopen", () => {
               //使用extend将popup组件挂载至popup弹窗内id为popup_window的dom对象上
               var Profile = Vue.extend(PopupWindow);
               //将对应点位的数据传入组件做进一步处理
               new Profile({
                 propsData: {
-                  layerdata: layer.feature,
+                  layerdata: layer,
+                  map: this.map,
                 },
               }).$mount("#popup_window");
             });
@@ -263,15 +245,11 @@ export default {
       this.layer_img = data;
     },
     //单位操作弹窗函数
-    layer_modify(state)
-    {
-      //1为新增，2为修改
-      switch(state)
-      {
+    layer_modify(state) {
+      switch (state) {
         case 1:
-
       }
-    }
+    },
   },
   mounted() {
     //注册地图
@@ -296,7 +274,11 @@ export default {
     add_mode(val) {
       if (val == true) {
         this.map.on("click", (event) => {
-          var marker = layer_register(event.latlng, "marker");
+          var marker = layer_register(
+            event.latlng,
+            "marker",
+            this.item_list[0]
+          );
           marker.addTo(this.callback_layer.select_Layer).on("click", () => {
             this.layer_window = true;
           });

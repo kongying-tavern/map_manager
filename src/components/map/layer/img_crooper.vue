@@ -20,18 +20,18 @@
         :fixedBox="option.fixedBox"
         @realTime="img_perview"
       ></vueCropper>
-    </div>
-    <div class="cropper_option">
-      <span class="option_title">图片预览</span>
-      <div :style="perview_img_style">
-        <div :style="perview_img.div">
-          <img :src="perview_img.url" :style="perview_img.img" />
+      <div class="cropper_option">
+        <span class="option_title">图片预览</span>
+        <div :style="perview_img_style">
+          <div :style="perview_img.div">
+            <img :src="perview_img.url" :style="perview_img.img" />
+          </div>
         </div>
+        <q-card-section class="row justify-center">
+          <q-btn label="确认" color="primary" @click="cut_img"></q-btn>
+          <q-btn label="取消" v-close-popup style="margin-left: 30px"></q-btn>
+        </q-card-section>
       </div>
-      <q-card-section class="row justify-center">
-        <q-btn label="确认" color="primary" @click="cut_img"></q-btn>
-        <q-btn label="取消"  v-close-popup style="margin-left:30px"></q-btn>
-      </q-card-section>
     </div>
   </div>
 </template>
@@ -81,19 +81,18 @@ export default {
     //截图
     cut_img() {
       this.$refs.cropper.getCropData((data) => {
-        this.$emit('screenshot',data);
+        this.$emit("screenshot", data);
       });
     },
   },
-  mounted() {
-  },
+  mounted() {},
 };
 </script>
 <style scoped>
 .cropper_containor {
   box-shadow: none;
   position: relative;
-  width: 80vw;
+  width: 70vw;
   max-width: 80vw;
   height: 75vh;
 }
@@ -101,14 +100,14 @@ export default {
   position: absolute;
   left: 0;
   top: 0;
-  width: 70%;
+  width: 100%;
   height: 100%;
 }
 .cropper_option {
   position: absolute;
   right: 0;
   top: 0;
-  width: 30%;
+  width: 20%;
   height: 45%;
   background: #fff;
   overflow: hidden;

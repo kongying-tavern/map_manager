@@ -68,14 +68,15 @@ function create_geojson(data) {
 * 生成单个点位
 * @param {array} latlng 点位坐标参数
 * @param {string} state 调用类型，可选参数为'marker'和'group'，前者为打点新增，后者为渲染点位组中点位
+* @param {string} icontype 生成的点位的框框背景的类型，默认为正常边框，可选项见上方背景生成函数api
 * @param {array} group 点位组对象,用于获取点位的图标等信息
 * @returns {Object} marker对象
  */
-function layer_register(latlng, state, group) {
+function layer_register(latlng, state, icontype = "border_off", group) {
     //首先判断点位是有边框还是无边框类型
     //再判断点位是否是存档中标记的点位
     //有边框点位通过更改背景图片展示是否标记。无边框类则是更改点位图片
-    let icondata = icon_bg('border_off');
+    let icondata = icon_bg(icontype);
     let marker_order = [latlng.lat, latlng.lng];
     switch (state) {
         //传到数据库中的点位的渲染使用的是lng-lat（即yx轴），而打点时使用的是xy轴，故打点时生成的点位坐标的xy轴需要倒置
@@ -95,7 +96,6 @@ function layer_register(latlng, state, group) {
         }),
         alt: `${latlng.lat},${latlng.lng}`,
     });
-    console.log(group);
     return marker;
 }
 /**

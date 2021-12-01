@@ -96,6 +96,23 @@
             v-close-popup
             style="margin-left: 30px"
           />
+          <q-btn
+            v-show="this.handle_state == 2 ? true : false"
+            color="red"
+            text-color="white"
+            label="移除"
+            @click="remove_add_layer"
+            v-close-popup
+            style="margin-left: 30px"
+          />
+          <q-btn
+            color="red"
+            v-show="this.handle_state != 2 ? true : false"
+            text-color="white"
+            label="删除"
+            v-close-popup
+            style="margin-left: 30px"
+          />
         </q-card-section>
       </q-card>
     </q-dialog>
@@ -105,6 +122,19 @@
     </q-dialog>
     <q-dialog v-model="table_list_window" seamless position="bottom">
       <q-card style="width: 50vw; height: 40vh"></q-card>
+    </q-dialog>
+    <q-dialog v-model="drag_hint" seamless position="top">
+      <q-card>
+        <q-card-section>
+          <q-circular-progress
+            indeterminate
+            size="20px"
+            color="primary"
+            :thickness="0.2"
+            class="q-ma-md"
+          />拖动标记以改动点位的位置</q-card-section
+        >
+      </q-card>
     </q-dialog>
   </base-content>
 </template>
@@ -140,12 +170,16 @@ export default {
       item_id: null,
       item_list: null,
       add_mode: false,
+      drag_mode: false,
       select_layer_id: null,
+      select_layer_object: null,
       cropper_window: false,
       selector_loading: false,
       layer_img: require("../../assets/img/default.png"),
       upload_img: null,
       crooper_img: null,
+      handle_state: "",
+      drag_hint: false,
     };
   },
   components: {
@@ -154,6 +188,17 @@ export default {
     ImgCut,
   },
   methods: {
+    //提升
+    showNotif(msg, time = 3000) {
+      this.$q.notify({
+        message: msg,
+        color: "white",
+        icon: "check",
+        textColor: "black",
+        position: "top",
+        timeout: time,
+      });
+    },
     //在地图上绘制所选点位下的所有点位
     layer_draw(val) {
       if (val != null) {
@@ -179,6 +224,7 @@ export default {
             //需要指定一个dom元素用于绑定组件，且需要为其指定宽度，否则leaflet弹窗无法获取容器宽度导致组件内容无法完全展示
             layer.bindPopup(`<div id="popup_window"></div>`);
             layer.on("popupopen", () => {
+              this.select_layer_object = layer;
               //使用extend将popup组件挂载至popup弹窗内id为popup_window的dom对象上
               var Profile = Vue.extend(PopupWindow);
               //将对应点位的数据传入组件做进一步处理
@@ -245,10 +291,32 @@ export default {
       this.layer_img = data;
     },
     //单位操作弹窗函数
-    layer_modify(state) {
+    //1，修改打点 2，新增打点
+    layer_modify(state, data) {
+      this.handle_state = state;
       switch (state) {
         case 1:
+          this.layer_window = true;
+          break;
+        case 2:
+          this.layer_window = true;
+          break;
       }
+    },
+    //点位拖拽函数
+    layer_drag() {
+      this.map.closePopup();
+      this.drag_hint = true;
+      this.select_layer_object.dragging.enable();
+      this.select_layer_object.on("dragend", () => {
+        this.drag_hint = false;
+        this.showNotif("点位坐标更新成功");
+        this.select_layer_object.dragging.disable();
+      });
+    },
+    //撤销新增点位函数
+    remove_add_layer() {
+      this.map.removeLayer(this.select_layer_object);
     },
   },
   mounted() {
@@ -266,7 +334,10 @@ export default {
     "$store.state.layer_handel_data": function (val) {
       switch (val.handel_type) {
         case 1:
-          this.layer_window = true;
+          this.layer_modify(1, val.handel_data);
+          break;
+        case 2:
+          this.layer_drag();
           break;
       }
     },
@@ -280,7 +351,8 @@ export default {
             this.item_list[0]
           );
           marker.addTo(this.callback_layer.select_Layer).on("click", () => {
-            this.layer_window = true;
+            this.select_layer_object = marker;
+            this.layer_modify(2, marker);
           });
         });
       } else {
@@ -332,10 +404,10 @@ export default {
 
 <style>
 #popup_window {
-  width: 300px;
+  width: 250px;
 }
 .popup {
-  width: 300px;
+  width: 250px;
   font-size: 16px;
 }
 .leaflet-container a.leaflet-popup-close-button {

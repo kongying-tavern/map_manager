@@ -15,9 +15,10 @@
         {{ layerdata.feature.properties.popupContent }}
       </p>
     </div>
-    <div class="btns">
+    <div class="btns row justify-between">
       <q-btn flat label="修改" color="primary" @click="layer_handel(1)"></q-btn>
       <q-btn flat label="标记" color="primary" @click="layer_mark"></q-btn>
+      <q-btn flat label="更改坐标" color="primary" @click="layer_handel(2)"></q-btn>
     </div>
   </div>
 </template>
@@ -36,7 +37,7 @@ export default {
   mounted() {},
   methods: {
     //将操作点位的数据传至vuex state
-    //type=>1,修改;2,删除
+    //type=>1,修改信息;2,更改坐标
     layer_handel(type) {
       store.commit("layer_edit", {
         type: type,

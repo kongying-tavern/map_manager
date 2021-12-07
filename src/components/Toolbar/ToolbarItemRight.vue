@@ -71,9 +71,8 @@ export default {
     },
 
     logout () {
-      this.$store.commit('LOGOUT')
-      this.$router.push('/')
-      window.sessionStorage.clear()
+      this.$q.cookies.remove('active');
+      this.$router.push('/logon');
       if (process.env.MODE === 'electron') {
         this.$q.electron.remote.getCurrentWindow().setSize(500, 490)
         this.$q.electron.remote.getCurrentWindow().center()

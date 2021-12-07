@@ -8,10 +8,6 @@
           <q-toggle v-model="edit_state" size="50px" />
           <span class="edit_text">操作窗口</span>
         </div>
-        <div>
-          <q-toggle v-model="table_list_window" size="50px" />
-          <span class="edit_text">列表模式</span>
-        </div>
         <div v-show="select_layer_id == null ? false : true">
           <q-toggle v-model="add_mode" size="50px" />
           <span class="edit_text">打点模式</span>
@@ -44,17 +40,6 @@
         <q-card-section>
           <q-list bordered separator style="width: 500px">
             <q-item>
-              <q-item-section> 点位名称 </q-item-section>
-              <q-item-section>
-                <q-input
-                  outlined
-                  v-model="layer_data.name"
-                  placeholder="点位名称"
-                >
-                </q-input>
-              </q-item-section>
-            </q-item>
-            <q-item>
               <q-item-section> 点位描述 </q-item-section>
               <q-item-section>
                 <q-input
@@ -69,7 +54,7 @@
               <q-item-section> 点位图片 </q-item-section>
               <q-item-section>
                 <q-img
-                  :src="layer_img"
+                  :src="show_img"
                   class="layer_img"
                   @click="upload_function"
                 >
@@ -88,7 +73,11 @@
           </q-list>
         </q-card-section>
         <q-card-section>
-          <q-btn color="primary" label="确认" />
+          <q-btn
+            color="primary"
+            label="确认"
+            @click="update_add_layer(handle_state)"
+          />
           <q-btn
             color="white"
             text-color="primary"
@@ -120,19 +109,24 @@
     <q-dialog v-model="cropper_window">
       <img-cut :crooper_img="crooper_img" @screenshot="cut_img"></img-cut>
     </q-dialog>
-    <q-dialog v-model="table_list_window" seamless position="bottom">
-      <q-card style="width: 50vw; height: 40vh"></q-card>
-    </q-dialog>
+    <!-- 拖拽提示 -->
     <q-dialog v-model="drag_hint" seamless position="top">
       <q-card>
-        <q-card-section>
+        <q-card-section class="row items-center">
           <q-circular-progress
             indeterminate
             size="20px"
             color="primary"
             :thickness="0.2"
             class="q-ma-md"
-          />拖动标记以改动点位的位置</q-card-section
+          />
+          <span>拖动标记以改动点位的位置</span>
+          <q-btn
+            color="primary"
+            style="margin-left: 20px"
+            @click="layer_drag_cancel"
+            >取消</q-btn
+          ></q-card-section
         >
       </q-card>
     </q-dialog>
@@ -175,9 +169,9 @@ export default {
       select_layer_object: null,
       cropper_window: false,
       selector_loading: false,
-      layer_img: require("../../assets/img/default.png"),
+      show_img: require("../../assets/img/default.png"),
       upload_img: null,
-      crooper_img: null,
+      crooper_img: '',
       handle_state: "",
       drag_hint: false,
     };
@@ -256,19 +250,9 @@ export default {
         rejectedEntries[0].file.type != "image/jpeg"
       ) {
         //提示弹窗
-        this.$q.notify({
-          type: "negative",
-          message: `上传的不是图片类型文件，请确认后重新上传`,
-          position: "top",
-          timeout: 3000,
-        });
+        this.showNotif(`上传的不是图片类型文件，请确认后重新上传`);
       } else {
-        this.$q.notify({
-          type: "negative",
-          message: `上传的图片文件不能大于2MB，请重新截图或压缩后再上传`,
-          position: "top",
-          timeout: 3000,
-        });
+        this.showNotif(`上传的图片文件不能大于2MB，请重新截图或压缩后再上传`);
       }
     },
     //上传后图片转换为base64
@@ -288,7 +272,8 @@ export default {
     //截图返回函数
     cut_img(data) {
       this.cropper_window = false;
-      this.layer_img = data;
+      this.show_img = data;
+      this.layer_data.img=data;
     },
     //单位操作弹窗函数
     //1，修改打点 2，新增打点
@@ -307,6 +292,7 @@ export default {
     layer_drag() {
       this.map.closePopup();
       this.drag_hint = true;
+      this.selector_loading = true;
       this.select_layer_object.dragging.enable();
       this.select_layer_object.on("dragend", () => {
         this.drag_hint = false;
@@ -314,9 +300,19 @@ export default {
         this.select_layer_object.dragging.disable();
       });
     },
+    //取消拖拽
+    layer_drag_cancel() {
+      this.drag_hint = false;
+      this.selector_loading = false;
+      this.select_layer_object.dragging.disable();
+    },
     //撤销新增点位函数
     remove_add_layer() {
       this.map.removeLayer(this.select_layer_object);
+    },
+    //提交新增点位
+    update_add_layer(state) {
+      console.log(this.layer_data);
     },
   },
   mounted() {

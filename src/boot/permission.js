@@ -4,6 +4,7 @@ import constantRoutes from '../router/constantRoutes'
 import { addTagView, setTagView } from 'components/TagView/TagViewUtils'
 import { date_request } from "../services/normal_request";
 import { Cookies } from "quasar";
+import { refresh_token } from "../services/normal_request";
 
 /**
  * Navigation guard and permission verification
@@ -15,6 +16,8 @@ import { Cookies } from "quasar";
  */
 export default async ({ app, router, Vue, store }) => {
   router.beforeEach((to, from, next) => {
+    // Process TAGVIEW and breadcrumbs after successful login
+    handleTagViewAndBreadcrumbsAndKeepAlive(from, to, store, Vue)
     if (Cookies.get("time_difference") == null) {
       date_request().then((res) => {
         //默认时间戳有效期为一天
@@ -23,44 +26,41 @@ export default async ({ app, router, Vue, store }) => {
         });
       });
     }
-    // Process TAGVIEW and breadcrumbs after successful login
-    handleTagViewAndBreadcrumbsAndKeepAlive(from, to, store, Vue)
-    // Simulate obtaining token
-    const token = sessionStorage.getItem('access_token')
-    const userRole = sessionStorage.getItem('user_role')
-    // There is a token indicating that you have logged in
-    if (token) {
-      // You cannot access the login interface after logging in
-      if (to.path === '/login') {
-        next({ path: '/' })
-      }
-      // There is user authority, and the route is not empty, then let go
+    // console.log(Cookies.get('active'))
+    if (Cookies.get('active') == null && to.path != '/logon') {
+      next({ path: '/logon' });
+    }
+    else if ((Cookies.get('active') - Date.now()) < 3600000 && to.path != '/logon') {
+      refresh_token(localStorage.getItem('refresh_token')).then(res => {
+        localStorage.setItem(
+          "user_token",
+          `${res.data.token_type} ${res.data.access_token}`
+        );
+        localStorage.setItem("refresh_token", `${res.data.refresh_token}`);
+      })
+    }
+    else {
+      const userRole = 'admin'
       if (userRole && store.getters.getRoutes.length) {
         next()
       } else {
         // Simulate when user permissions do not exist, obtain user permissions
-        const userRole = sessionStorage.getItem('user_role')
+        const userRole = 'admin'
         // And set the corresponding route according to the permissions
         store.commit('SET_ROLES_AND_ROUTES', userRole)
         // If you are prompted that addRoutes is deprecated, use the spread operator to complete the operation
         // router.addRoute(...store.getters.getRoutes)
         router.addRoute(...store.getters.getRoutes)
         // If addRoutes is not completed, the guard will execute it again
-        next({ ...to, replace: true })
-      }
-    } else {
-      // go to a route that does not require authorization
-      if (constantRoutes.some((item) => { return item.path === to.path })) {
-        next()
-      } else {
-        next({ path: '/logon' })
+        LoadingBar.stop();
+        next({ ...to, replace: true });
       }
     }
   })
   router.afterEach(() => {
     // Use multiple stop() to ensure that LoadingBar is properly closed after dynamically adding routes
-    LoadingBar.stop()
-    LoadingBar.stop()
+    LoadingBar.stop();
+    LoadingBar.stop();
   })
 }
 

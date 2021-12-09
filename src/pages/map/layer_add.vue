@@ -143,6 +143,7 @@ import {
   layer_register,
   layergroup_register,
 } from "../../api/layer";
+import { addlayer_handle } from "../../services/check_request";
 import LayerSelect from "../../components/map/layer/layer_select.vue";
 import PopupWindow from "../../components/map/layer/popup_window.vue";
 import ImgCut from "../../components/map/layer/img_crooper.vue";
@@ -171,7 +172,7 @@ export default {
       selector_loading: false,
       show_img: require("../../assets/img/default.png"),
       upload_img: null,
-      crooper_img: '',
+      crooper_img: "",
       handle_state: "",
       drag_hint: false,
     };
@@ -273,7 +274,7 @@ export default {
     cut_img(data) {
       this.cropper_window = false;
       this.show_img = data;
-      this.layer_data.img=data;
+      this.layer_data.img = data;
     },
     //单位操作弹窗函数
     //1，修改打点 2，新增打点
@@ -312,7 +313,19 @@ export default {
     },
     //提交新增点位
     update_add_layer(state) {
-      console.log(this.layer_data);
+      console.log(this.select_layer_object.options.alt);
+      console.log(this.select_layer_id);
+      let data = {
+        itemId: this.select_layer_id,
+        content: "",
+        remark: this.layer_data.desc,
+        imgPath: this.layer_data.img,
+        position: this.select_layer_object.options.alt,
+        time:0,
+      };
+      addlayer_handle("put", data).then((res) => {
+        console.log(res);
+      });
     },
   },
   mounted() {

@@ -62,6 +62,10 @@ export default {
     this.map = initmap(this.map);
     select_addlayer().then((res) => {
       console.log(res);
+      for(let i in res.data.data)
+      {
+        
+      }
     });
   },
 };

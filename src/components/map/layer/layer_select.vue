@@ -1,4 +1,4 @@
-<!-- 打点页操作窗口组件 -->
+ <!-- 打点页操作窗口组件 -->
 <template>
   <div class="layer_select">
     <q-card-section>

@@ -3,10 +3,30 @@
   <base-content>
     <!-- 上方状态切换 -->
     <div class="layer_add">
-      <div class="row items-center edit_switch">
-        <div>
-          <q-toggle v-model="edit_state" size="50px" />
-          <span class="edit_text">操作窗口</span>
+      <div class="items-center edit_switch">
+        <div class="row">
+          <div>
+            <q-toggle v-model="edit_state" size="50px" />
+            <span class="edit_text">操作窗口</span>
+          </div>
+          <div v-show="edit_state">
+            <div>
+              <q-toggle
+                v-model="right_card_state.selector"
+                :disable="!right_card_state.table"
+                size="50px"
+              />
+              <span class="edit_text">显示筛选器</span>
+            </div>
+            <div>
+              <q-toggle
+                v-model="right_card_state.table"
+                :disable="!right_card_state.selector"
+                size="50px"
+              />
+              <span class="edit_text">显示表格</span>
+            </div>
+          </div>
         </div>
         <div v-show="select_layer_id == null ? false : true">
           <q-toggle v-model="add_mode" size="50px" />
@@ -27,8 +47,38 @@
     </div>
     <!-- 右侧筛选器 -->
     <transition name="fade">
-      <q-card class="selector" v-show="edit_state">
-        <layer-select @select_layer="layer_draw"></layer-select>
+      <q-card class="selector_main row" v-show="edit_state">
+        <div v-show="right_card_state.selector" class="selector">
+          <layer-select @select_layer="layer_draw"></layer-select>
+        </div>
+        <q-separator
+          v-show="right_card_state.table && right_card_state.selector"
+          :vertical="true"
+        />
+        <div
+          v-show="right_card_state.table"
+          style="max-width: 1000px; margin: 10px 10px 0 10px"
+        >
+          <q-table
+            style="max-height: 700px"
+            title="点位列表"
+            :data="select_layerlist_data"
+            :columns="select_layerlist_columns"
+            selection="single"
+            :selected.sync="selected"
+            row-key="id"
+            virtual-scroll
+            :rows-per-page-options="[0]"
+          >
+            <!-- 表格内操作按钮插槽 -->
+            <template v-slot:body-cell-handle>
+              <q-td class="text-center">
+                <a href="javascript:;" style="margin-right: 20px">查看详情</a>
+                <a href="javascript:;">审核</a>
+              </q-td>
+            </template>
+          </q-table>
+        </div>
         <q-inner-loading style="z-index: 9999" :showing="selector_loading">
           <q-spinner-gears size="50px" color="primary" />
         </q-inner-loading>
@@ -103,6 +153,9 @@
             style="margin-left: 30px"
           />
         </q-card-section>
+        <q-inner-loading :showing="add_loading">
+          <q-spinner-gears size="50px" color="primary" />
+        </q-inner-loading>
       </q-card>
     </q-dialog>
     <!-- 图片裁剪弹窗 -->
@@ -147,9 +200,38 @@ import { addlayer_handle } from "../../services/check_request";
 import LayerSelect from "../../components/map/layer/layer_select.vue";
 import PopupWindow from "../../components/map/layer/popup_window.vue";
 import ImgCut from "../../components/map/layer/img_crooper.vue";
+import { icon_bg } from "../../api/layer";
 export default {
   data() {
     return {
+      selected: [],
+      select_layerlist_columns: [
+        {
+          name: "id",
+          label: "点位id",
+          field: "id",
+          align: "center",
+        },
+        {
+          name: "title",
+          label: "点位名称",
+          field: "title",
+          align: "center",
+        },
+        {
+          name: "content",
+          label: "点位描述",
+          field: "content",
+          align: "center",
+        },
+        {
+          name: "handle",
+          label: "操作",
+          field: "handle",
+          align: "center",
+        },
+      ],
+      select_layerlist_data: [],
       map: "",
       edit_state: true,
       table_list_window: false,
@@ -175,6 +257,11 @@ export default {
       crooper_img: "",
       handle_state: "",
       drag_hint: false,
+      add_loading: false,
+      right_card_state: {
+        selector: true,
+        table: true,
+      },
     };
   },
   components: {
@@ -183,7 +270,7 @@ export default {
     ImgCut,
   },
   methods: {
-    //提升
+    //提示
     showNotif(msg, time = 3000) {
       this.$q.notify({
         message: msg,
@@ -199,6 +286,10 @@ export default {
       if (val != null) {
         this.selector_loading = true;
         layer_data_select(val).then((res) => {
+          this.select_layerlist_data = [];
+          for (let i of res.data.data) {
+            this.select_layerlist_data.push(i);
+          }
           if (res.data.data.length != 0) {
             this.select_layer_id = val;
           } else {
@@ -244,7 +335,6 @@ export default {
     },
     //上传失败所用弹窗
     onRejected(rejectedEntries) {
-      console.log(rejectedEntries[0].file.type);
       //上传类型检测
       if (
         rejectedEntries[0].file.type != "image/png" &&
@@ -311,20 +401,40 @@ export default {
     remove_add_layer() {
       this.map.removeLayer(this.select_layer_object);
     },
+    //点位标记
+    layer_mark(layer) {
+      let layer_icondata = layer.getIcon();
+      switch (layer_icondata.options.state) {
+        case "off":
+          layer_icondata.options.state = "on";
+          break;
+        case "on":
+          layer_icondata.options.state = "off";
+          break;
+      }
+      let icondata = icon_bg(`border_${layer_icondata.options.state}`);
+      layer.setIcon(new icondata({ ...layer_icondata.options }));
+    },
     //提交新增点位
-    update_add_layer(state) {
-      console.log(this.select_layer_object.options.alt);
-      console.log(this.select_layer_id);
+    update_add_layer() {
       let data = {
         itemId: this.select_layer_id,
-        content: "",
-        remark: this.layer_data.desc,
-        imgPath: this.layer_data.img,
+        content: this.layer_data.desc,
+        title: "",
+        resourceBase64: this.layer_data.img,
         position: this.select_layer_object.options.alt,
-        time:0,
+        time: 0,
       };
+      this.add_loading = true;
       addlayer_handle("put", data).then((res) => {
-        console.log(res);
+        this.add_loading = false;
+        this.layer_window = false;
+        if (res.data.data == true) {
+          this.layer_mark(this.select_layer_object);
+          this.showNotif("新增成功!");
+        } else {
+          this.showNotif("新增失败!");
+        }
       });
     },
   },
@@ -386,17 +496,20 @@ export default {
   font-weight: bold;
   color: white;
 }
-.selector {
+.selector_main {
   position: absolute;
-  overflow: hidden scroll;
   z-index: 1000;
   top: 5vh;
-  right: 10px;
-  width: 350px;
+  right: 5px;
+  max-width: 100vw;
   height: 80vh;
 }
+.selector {
+  height: 100%;
+  overflow: scroll;
+}
 .selector::-webkit-scrollbar {
-  width: 5px;
+  width: 2px;
   background: #fff;
 }
 .selector::-webkit-scrollbar-thumb {

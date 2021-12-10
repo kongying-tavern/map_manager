@@ -18,7 +18,12 @@
     <div class="btns row justify-between">
       <q-btn flat label="修改" color="primary" @click="layer_handel(1)"></q-btn>
       <q-btn flat label="标记" color="primary" @click="layer_mark"></q-btn>
-      <q-btn flat label="更改坐标" color="primary" @click="layer_handel(2)"></q-btn>
+      <q-btn
+        flat
+        label="更改坐标"
+        color="primary"
+        @click="layer_handel(2)"
+      ></q-btn>
     </div>
   </div>
 </template>
@@ -73,8 +78,7 @@ p {
   width: 200px;
   height: 200px;
 }
-.text
-{
+.text {
   width: 90%;
   margin: 10px auto;
 }

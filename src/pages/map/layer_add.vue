@@ -64,12 +64,22 @@
             title="点位列表"
             :data="select_layerlist_data"
             :columns="select_layerlist_columns"
-            selection="single"
+            selection="multiple"
             :selected.sync="selected"
             row-key="id"
             virtual-scroll
             :rows-per-page-options="[0]"
           >
+            <template v-slot:top-right>
+              <div class="row">
+                <q-input
+                  outlined
+                  v-model="keyword_value"
+                  placeholder="请输入关键字搜索"
+                />
+                <q-btn color="primary" label="搜索" style="margin-left: 20px" />
+              </div>
+            </template>
             <!-- 表格内操作按钮插槽 -->
             <template v-slot:body-cell-handle>
               <q-td class="text-center">
@@ -78,6 +88,14 @@
               </q-td>
             </template>
           </q-table>
+          <div style="margin-top: 20px">
+            <q-btn
+              label="批量修改"
+              color="primary"
+              :disable="selected.length == 0 ? true : false"
+              @click="layer_modify(3)"
+            ></q-btn>
+          </div>
         </div>
         <q-inner-loading style="z-index: 9999" :showing="selector_loading">
           <q-spinner-gears size="50px" color="primary" />
@@ -100,7 +118,7 @@
                 </q-input>
               </q-item-section>
             </q-item>
-            <q-item>
+            <q-item v-show="handle_state != 3 ? true : false">
               <q-item-section> 点位图片 </q-item-section>
               <q-item-section>
                 <q-img
@@ -139,7 +157,7 @@
             v-show="this.handle_state == 2 ? true : false"
             color="red"
             text-color="white"
-            label="移除"
+            label="撤销新增"
             @click="remove_add_layer"
             v-close-popup
             style="margin-left: 30px"
@@ -148,7 +166,7 @@
             color="red"
             v-show="this.handle_state != 2 ? true : false"
             text-color="white"
-            label="删除"
+            label="删除点位"
             v-close-popup
             style="margin-left: 30px"
           />
@@ -262,6 +280,7 @@ export default {
         selector: true,
         table: true,
       },
+      keyword_value: "",
     };
   },
   components: {
@@ -367,7 +386,7 @@ export default {
       this.layer_data.img = data;
     },
     //单位操作弹窗函数
-    //1，修改打点 2，新增打点
+    //1，修改打点 2，新增打点 3，批量修改
     layer_modify(state, data) {
       this.handle_state = state;
       switch (state) {
@@ -377,6 +396,8 @@ export default {
         case 2:
           this.layer_window = true;
           break;
+        case 3:
+          this.layer_window = true;
       }
     },
     //点位拖拽函数
@@ -483,6 +504,9 @@ export default {
 </script>
 
 <style scoped>
+.layer_add {
+  overflow: hidden;
+}
 #map {
   position: relative;
   height: 100vh;

@@ -38,6 +38,16 @@ const asyncRoutesChildren = [
     component: layout,
     children: [
       {
+        path: 'map_maintain',
+        name: 'map_maintain',
+        meta: {
+          roles: ['admin'],
+          title: '地图维护',
+          icon: 'photo_library',
+        },
+        component: () => import('pages/map/map_maintain.vue')
+      },
+      {
         path: 'layer_add',
         name: 'layer_add',
         meta: {

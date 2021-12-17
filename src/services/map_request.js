@@ -20,9 +20,11 @@ async function defalut_request(method, url) {
 function options_type_select() {
     return defalut_request('get', "http://8.129.180.37:8089/api/option")
 }
+//请求选中点位类型下所有点位类型信息
 function layer_data_select(id) {
     return defalut_request('get', `http://8.129.180.37:8089/api/marker/${id}`)
 }
+//按关键字查询点位信息
 function layer_keyword_select(keyword) {
     return defalut_request('get', `http://8.129.180.37:8089/api/option?keyword=${keyword}`)
 }

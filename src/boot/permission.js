@@ -36,7 +36,13 @@ export default async ({ app, router, Vue, store }) => {
           "user_token",
           `${res.data.token_type} ${res.data.access_token}`
         );
+        Cookies.set("active",
+          `${Date.now() + res.data.expires_in * 1000}`,
+          {
+            expires: `${res.data.expires_in}s`,
+          });
         localStorage.setItem("refresh_token", `${res.data.refresh_token}`);
+        next();
       })
     }
     else {

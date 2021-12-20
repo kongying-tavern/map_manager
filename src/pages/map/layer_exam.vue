@@ -66,9 +66,9 @@ export default {
           align: "center",
         },
         {
-          name: "type",
+          name: "itemName",
           label: "点位类型",
-          field: "type",
+          field: "itemName",
           align: "center",
         },
         {

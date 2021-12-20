@@ -42,7 +42,6 @@ function createWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null
   });
-  const window_session = mainWindow.webContents.session;
   // devTools
   // session.defaultSession.loadExtension(
   //   path.resolve(__dirname, '../../.devTools/shell-chrome') // 这个是刚刚build好的插件目录

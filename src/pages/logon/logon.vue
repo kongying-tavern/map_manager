@@ -65,7 +65,6 @@
 <script>
 import { login } from "../../services/normal_request";
 import LottieWebCimo from "../../components/LottieWebCimo/LottieWebCimo";
-import { session } from "electron";
 export default {
   name: "logon",
   components: { LottieWebCimo },
@@ -160,8 +159,6 @@ export default {
     },
   },
   mounted() {
-    // 查询所有 cookies。
-    document.cookie = "username=John Doe";
   },
 };
 </script>

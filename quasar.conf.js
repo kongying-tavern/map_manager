@@ -50,7 +50,7 @@ module.exports = function (/* ctx */) {
 
     // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-build
     build: {
-      publicPath: process.env.NODE_ENV === 'production' ? '/quasar-manage/' : '/',
+      // publicPath: process.env.NODE_ENV === 'production' ? '/quasar-manage/' : '/',
       vueRouterMode: 'hash', // available values: 'hash', 'history'
       // transpile: false,
       vueCompiler: true,

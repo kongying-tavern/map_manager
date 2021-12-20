@@ -17,15 +17,15 @@ if (process.env.PROD) {
 
 let mainWindow
 
-function createWindow () {
+function createWindow() {
   /**
    * Initial window options
    */
   mainWindow = new BrowserWindow({
-    width: 500,
-    height: 490,
+    width: 800,
+    height: 600,
     useContentSize: true,
-    frame: false,
+    frame: true,
     webPreferences: {
       // Change from /quasar.conf.js > electron > nodeIntegration;
       // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
@@ -41,8 +41,8 @@ function createWindow () {
 
   mainWindow.on('closed', () => {
     mainWindow = null
-  })
-
+  });
+  const window_session = mainWindow.webContents.session;
   // devTools
   // session.defaultSession.loadExtension(
   //   path.resolve(__dirname, '../../.devTools/shell-chrome') // 这个是刚刚build好的插件目录
@@ -59,6 +59,6 @@ app.on('window-all-closed', () => {
 
 app.on('activate', () => {
   if (mainWindow === null) {
-    createWindow()
+    createWindow();
   }
 })

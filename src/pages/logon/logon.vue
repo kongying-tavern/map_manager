@@ -1,12 +1,6 @@
 <template>
-  <div
-    class="flex justify-center items-center q-electron-drag"
-    style="height: 100%"
-  >
-    <div
-      class="row base-card-shadow electron-hide"
-      style="width: 30vw; min-width: 300px"
-    >
+  <div class="flex justify-center items-center" style="height: 100%">
+    <div class="row base-card-shadow" style="width: 30vw; min-width: 300px">
       <div class="col flex justify-center items-center">
         <q-card
           square
@@ -71,6 +65,7 @@
 <script>
 import { login } from "../../services/normal_request";
 import LottieWebCimo from "../../components/LottieWebCimo/LottieWebCimo";
+import { session } from "electron";
 export default {
   name: "logon",
   components: { LottieWebCimo },
@@ -124,7 +119,7 @@ export default {
             this.loading = !this.loading;
             this.$q.notify({
               icon: "announcement",
-              message: `登录失败：${error.response.data.error_description}`,
+              message: `登录失败：${error}`,
               color: "red",
               position: "top",
               timeout: 3500,
@@ -164,7 +159,10 @@ export default {
       // }
     },
   },
-  mounted() {},
+  mounted() {
+    // 查询所有 cookies。
+    document.cookie = "username=John Doe";
+  },
 };
 </script>
 

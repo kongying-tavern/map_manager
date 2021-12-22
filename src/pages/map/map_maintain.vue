@@ -395,6 +395,7 @@ export default {
       switch (this.option_type) {
         case "area":
           this.update_data.area_id = data.id;
+          
           break;
         case "type":
           this.update_data.area_id = this.area_selected[0].id;

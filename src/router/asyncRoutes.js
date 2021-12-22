@@ -67,16 +67,6 @@ const asyncRoutesChildren = [
         },
         component: () => import('pages/map/layer_exam.vue')
       },
-      {
-        path: 'layer_type_edit',
-        name: 'layer_type_edit',
-        meta: {
-          roles: ['admin'],
-          title: '点位类型维护',
-          icon: 'auto_fix_high',
-        },
-        component: () => import('pages/map/layer_type_edit.vue')
-      },
     ]
   },
   {

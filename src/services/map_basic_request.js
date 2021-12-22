@@ -42,10 +42,15 @@ function map_type_switch(id) {
 function map_item_handle(method, data, id = '') {
     return defalut_request(method, `http://8.129.180.37:8089/api/basic/item/${id}`, data);
 }
+//地图点位启用/禁用
+function map_item_switch(id) {
+    return defalut_request('post ', `http://8.129.180.37:8089/api/basic/item/switch/${id}`, data);
+}
 export {
     map_area_handle,
     map_area_switch,
     map_type_handle,
     map_type_switch,
-    map_item_handle
+    map_item_handle,
+    map_item_switch
 }

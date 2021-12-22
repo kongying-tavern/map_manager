@@ -21,8 +21,7 @@
           </div>
         </div>
       </q-menu>
-      <q-avatar size="26px">
-        <img :src="this.$PUBLIC_PATH + 'data/avatar.jpg'">
+      <q-avatar icon="person" size="26px">
       </q-avatar>
       <q-tooltip>账号</q-tooltip>
     </q-btn>

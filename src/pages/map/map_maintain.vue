@@ -404,6 +404,7 @@ export default {
           this.update_data.area_id = this.area_selected[0].id;
           this.update_data.type_id = this.type_selected[0].id;
           this.update_data.item_id = data.id;
+          
           break;
       }
       this.update_window = true;

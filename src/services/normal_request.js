@@ -4,14 +4,14 @@ import qs from 'qs'
 function date_request() {
     return axios({
         method: 'get',
-        url: "http://8.129.180.37:8089/api/ts/now"
+        url: "http://api.yuanshen.site:8089/api/ts/now"
     })
 }
 //登录
 function login(username, password) {
     return axios({
         method: 'post',
-        url: "http://8.129.180.37:8089/api/oauth/token?grant_type=password",
+        url: "http://api.yuanshen.site:8089/api/oauth/token?grant_type=password",
         headers: { 'Authorization': `Basic YXBwOmFwcA==`, "Content-Type": "application/x-www-form-urlencoded" },
         data: qs.stringify({
             username: 'admin',
@@ -23,7 +23,7 @@ function login(username, password) {
 function refresh_token(token) {
     return axios({
         method: 'post',
-        url: `http://8.129.180.37:8089/api/oauth/token?refresh_token=${token}&grant_type=refresh_token`,
+        url: `http://api.yuanshen.site:8089/api/oauth/token?refresh_token=${token}&grant_type=refresh_token`,
         headers: { 'Authorization': `Basic YXBwOmFwcA==`, "Content-Type": "application/x-www-form-urlencoded" },
     })
 }

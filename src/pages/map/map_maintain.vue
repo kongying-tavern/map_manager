@@ -27,7 +27,7 @@
             <q-checkbox
               v-model="props.row.visibility"
               :true-value="1"
-              :false-value="-1"
+              :false-value="0"
               @input="data_freeze('area', props.row)"
             />
           </q-td>
@@ -74,7 +74,7 @@
             <q-checkbox
               v-model="props.row.visibility"
               :true-value="1"
-              :false-value="-1"
+              :false-value="0"
               @input="data_freeze('type', props.row)"
             />
           </q-td>
@@ -107,7 +107,7 @@
             <q-checkbox
               v-model="props.row.visibility"
               :true-value="1"
-              :false-value="-1"
+              :false-value="0"
               @input="data_freeze('item', props.row)"
             />
           </q-td>
@@ -395,7 +395,6 @@ export default {
       switch (this.option_type) {
         case "area":
           this.update_data.area_id = data.id;
-          
           break;
         case "type":
           this.update_data.area_id = this.area_selected[0].id;

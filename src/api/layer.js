@@ -58,7 +58,9 @@ function create_geojson(data) {
                 popTitle: i.title,
                 popupContent: i.content,
             },
-            imgsrc: "",
+            icon_src: i.icon,
+            imgsrc: i.resource == null ? `https://yuanshen.site/comment_png/${i.mlayer}_${i.mitemId}.jpg`:i.resource,
+            layer_id: i.mlayer,
             id: i.id,
         });
     }
@@ -69,10 +71,10 @@ function create_geojson(data) {
 * @param {array} latlng 点位坐标参数
 * @param {string} state 调用类型，可选参数为'marker'和'group'，前者为打点新增，后者为渲染点位组中点位
 * @param {string} icontype 生成的点位的框框背景的类型，默认为正常边框，可选项见上方背景生成函数api
-* @param {array} group 点位组对象,用于获取点位的图标等信息
+* @param {array} item_id 点位组对象id,用于获取点位的图标等信息
 * @returns {Object} marker对象
  */
-function layer_register(latlng, state, icontype = "border_off", group) {
+function layer_register(latlng, state, icontype = "border_off", item_id) {
     //首先判断点位是有边框还是无边框类型
     //再判断点位是否是存档中标记的点位
     //有边框点位通过更改背景图片展示是否标记。无边框类则是更改点位图片
@@ -90,8 +92,8 @@ function layer_register(latlng, state, icontype = "border_off", group) {
     }
     var marker = L.marker(marker_order, {
         icon: new icondata({
-            className: `mark-${4}`,
-            iconUrl: "https://yuanshen.site/imgs/icon_26.svg",
+            className: `mark-${item_id}`,
+            iconUrl: `https://assets.yuanshen.site/icons/${item_id}.png`,
             state: 'off'
         }),
         alt: `${latlng.lat},${latlng.lng}`,
@@ -102,6 +104,7 @@ function layer_register(latlng, state, icontype = "border_off", group) {
 * 生成点位组
 * @param {array} layergroup_data  要生成点位的点位组对象数组
 * @param {Object} map map实例对象
+* @param {array} item_id 点位组对象id,用于获取点位的图标等信息
 * @returns {Object} markerClusterGroup对象（聚合后的点位组）
  */
 function layergroup_register(layergroup_data, map) {
@@ -113,7 +116,7 @@ function layergroup_register(layergroup_data, map) {
     L.geoJSON(layergroup_data, {
         pointToLayer: function (feature, latlng) {
             var key = feature.id;
-            var marker = layer_register(latlng, 'group', layergroup_data);
+            var marker = layer_register(latlng, 'group', undefined, feature.layer_id);
             markers[key] = marker;
             return marker.addTo(layer_list.select_Layer);
         },

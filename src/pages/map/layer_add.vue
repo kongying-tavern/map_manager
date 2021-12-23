@@ -322,7 +322,7 @@ export default {
           //将点位传入处理函数进行处理，返回leaflet的layer对象,同时对组件挂载
           this.callback_layer = layergroup_register(
             this.item_list[0],
-            this.map
+            this.map,
           );
           //给点位绑定弹窗的相关处理
           this.callback_layer.select_Layer.eachLayer((layer) => {

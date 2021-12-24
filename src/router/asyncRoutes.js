@@ -52,7 +52,7 @@ const asyncRoutesChildren = [
         name: 'layer_add',
         meta: {
           roles: ['admin'],
-          title: '点位维护',
+          title: '点位新增',
           icon: 'add_location',
         },
         component: () => import('pages/map/layer_add.vue')

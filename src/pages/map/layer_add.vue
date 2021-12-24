@@ -9,24 +9,6 @@
             <q-toggle v-model="edit_state" size="50px" />
             <span class="edit_text">操作窗口</span>
           </div>
-          <div v-show="edit_state">
-            <div>
-              <q-toggle
-                v-model="right_card_state.selector"
-                :disable="!right_card_state.table"
-                size="50px"
-              />
-              <span class="edit_text">显示筛选器</span>
-            </div>
-            <div>
-              <q-toggle
-                v-model="right_card_state.table"
-                :disable="!right_card_state.selector"
-                size="50px"
-              />
-              <span class="edit_text">显示表格</span>
-            </div>
-          </div>
         </div>
         <div v-show="select_layer_id == null ? false : true">
           <q-toggle v-model="add_mode" size="50px" />
@@ -47,60 +29,9 @@
     </div>
     <!-- 右侧筛选器 -->
     <transition name="fade">
-      <q-card class="selector_main row" v-show="edit_state">
-        <div v-show="right_card_state.selector" class="selector">
-          <layer-select @select_layer="layer_draw"></layer-select>
-        </div>
-        <q-separator
-          v-show="right_card_state.table && right_card_state.selector"
-          :vertical="true"
-        />
-        <div
-          v-show="right_card_state.table"
-          style="max-width: 1000px; margin: 10px 10px 0 10px"
-        >
-          <q-table
-            style="max-height: 700px"
-            title="点位列表"
-            :data="select_layerlist_data"
-            :columns="select_layerlist_columns"
-            selection="multiple"
-            :selected.sync="selected"
-            row-key="id"
-            virtual-scroll
-            :rows-per-page-options="[0]"
-          >
-            <template v-slot:top-right>
-              <div class="row">
-                <q-input
-                  outlined
-                  v-model="keyword_value"
-                  placeholder="请输入关键字搜索"
-                />
-                <q-btn color="primary" label="搜索" style="margin-left: 20px" />
-              </div>
-            </template>
-            <!-- 表格内操作按钮插槽 -->
-            <template v-slot:body-cell-handle>
-              <q-td class="text-center">
-                <a href="javascript:;" style="margin-right: 20px">查看详情</a>
-                <a href="javascript:;">审核</a>
-              </q-td>
-            </template>
-          </q-table>
-          <div style="margin-top: 20px">
-            <q-btn
-              label="批量修改"
-              color="primary"
-              :disable="selected.length == 0 ? true : false"
-              @click="layer_modify(3)"
-            ></q-btn>
-          </div>
-        </div>
-        <q-inner-loading style="z-index: 9999" :showing="selector_loading">
-          <q-spinner-gears size="50px" color="primary" />
-        </q-inner-loading>
-      </q-card>
+      <div class="selector_main" v-show="edit_state">
+        <layer-select @select_layer="layer_draw"></layer-select>
+      </div>
     </transition>
     <!-- 点位弹窗 -->
     <q-dialog v-model="layer_window">
@@ -126,6 +57,18 @@
                   class="layer_img"
                   @click="upload_function"
                 >
+                  <template v-slot:error>
+                    <div
+                      class="
+                        absolute-full
+                        flex flex-center
+                        bg-primary
+                        text-white
+                      "
+                    >
+                      没有相关图片
+                    </div>
+                  </template>
                 </q-img>
                 <q-file
                   v-show="false"
@@ -207,7 +150,10 @@
 <script>
 import Vue from "vue";
 import BaseContent from "../../components/BaseContent/BaseContent";
-import { layer_data_select } from "../../services/map_request";
+import {
+  layer_data_select,
+  layer_item_keyword_select,
+} from "../../services/map_request";
 import { initmap } from "../../api/map";
 import {
   create_geojson,
@@ -222,43 +168,12 @@ import { icon_bg } from "../../api/layer";
 export default {
   data() {
     return {
-      selected: [],
-      select_layerlist_columns: [
-        {
-          name: "id",
-          label: "点位id",
-          field: "id",
-          align: "center",
-        },
-        {
-          name: "title",
-          label: "点位名称",
-          field: "title",
-          align: "center",
-        },
-        {
-          name: "content",
-          label: "点位描述",
-          field: "content",
-          align: "center",
-        },
-        {
-          name: "handle",
-          label: "操作",
-          field: "handle",
-          align: "center",
-        },
-      ],
-      select_layerlist_data: [],
       map: "",
       edit_state: true,
       table_list_window: false,
-      model: null,
-      options: [],
       map_loading: false,
       layer_window: false,
       layer_data: {
-        name: "",
         desc: "",
         img: "",
       },
@@ -280,7 +195,7 @@ export default {
         selector: true,
         table: true,
       },
-      keyword_value: "",
+      selected_item_id: "",
     };
   },
   components: {
@@ -304,47 +219,44 @@ export default {
     layer_draw(val) {
       if (val != null) {
         this.selector_loading = true;
-        layer_data_select(val).then((res) => {
-          this.select_layerlist_data = [];
-          for (let i of res.data.data) {
-            this.select_layerlist_data.push(i);
-          }
-          if (res.data.data.length != 0) {
-            this.select_layer_id = val;
-          } else {
-            this.select_layer_id = null;
-          }
-          this.item_list = create_geojson(res.data.data);
-          //每次切换点位时清空地图上已有点位
-          if (this.callback_layer != null) {
-            this.map.removeLayer(this.callback_layer.select_Layer);
-          }
-          //将点位传入处理函数进行处理，返回leaflet的layer对象,同时对组件挂载
-          this.callback_layer = layergroup_register(
-            this.item_list[0],
-            this.map,
-          );
-          //给点位绑定弹窗的相关处理
-          this.callback_layer.select_Layer.eachLayer((layer) => {
-            //需要指定一个dom元素用于绑定组件，且需要为其指定宽度，否则leaflet弹窗无法获取容器宽度导致组件内容无法完全展示
-            layer.bindPopup(`<div id="popup_window"></div>`);
-            layer.on("popupopen", () => {
-              this.select_layer_object = layer;
-              //使用extend将popup组件挂载至popup弹窗内id为popup_window的dom对象上
-              var Profile = Vue.extend(PopupWindow);
-              //将对应点位的数据传入组件做进一步处理
-              new Profile({
-                propsData: {
-                  layerdata: layer,
-                  map: this.map,
-                },
-              }).$mount("#popup_window");
-            });
-          });
-          //在地图上挂载点位
-          this.map.addLayer(this.callback_layer.select_Layer);
-          this.selector_loading = false;
-        });
+        // layer_data_select(val).then((res) => {
+        //   if (res.data.data.length != 0) {
+        //     this.select_layer_id = val;
+        //   } else {
+        //     this.select_layer_id = null;
+        //   }
+        //   this.selected_item_id = res.data.data[0].mlayer;
+        //   this.item_list = create_geojson(res.data.data);
+        //   //每次切换点位时清空地图上已有点位
+        //   if (this.callback_layer != null) {
+        //     this.map.removeLayer(this.callback_layer.select_Layer);
+        //   }
+        //   //将点位传入处理函数进行处理，返回leaflet的layer对象,同时对组件挂载
+        //   this.callback_layer = layergroup_register(
+        //     this.item_list[0],
+        //     this.map
+        //   );
+        //   //给点位绑定弹窗的相关处理
+        //   this.callback_layer.select_Layer.eachLayer((layer) => {
+        //     //需要指定一个dom元素用于绑定组件，且需要为其指定宽度，否则leaflet弹窗无法获取容器宽度导致组件内容无法完全展示
+        //     layer.bindPopup(`<div id="popup_window"></div>`);
+        //     layer.on("popupopen", () => {
+        //       this.select_layer_object = layer;
+        //       //使用extend将popup组件挂载至popup弹窗内id为popup_window的dom对象上
+        //       var Profile = Vue.extend(PopupWindow);
+        //       //将对应点位的数据传入组件做进一步处理
+        //       new Profile({
+        //         propsData: {
+        //           layerdata: layer,
+        //           map: this.map,
+        //         },
+        //       }).$mount("#popup_window");
+        //     });
+        //   });
+        //   //在地图上挂载点位
+        //   this.map.addLayer(this.callback_layer.select_Layer);
+        //   this.selector_loading = false;
+        // });
       }
     },
     //触发选取文件事件
@@ -391,9 +303,20 @@ export default {
       this.handle_state = state;
       switch (state) {
         case 1:
+          console.log(data);
+          this.layer_data = {
+            desc: data.properties.popupContent,
+            img: data.imgsrc,
+          };
+          this.show_img = data.imgsrc;
           this.layer_window = true;
           break;
         case 2:
+          this.layer_data = {
+            desc: "",
+            img: "",
+          };
+          this.show_img = require("../../assets/img/default.png");
           this.layer_window = true;
           break;
         case 3:
@@ -488,7 +411,8 @@ export default {
           var marker = layer_register(
             event.latlng,
             "marker",
-            this.item_list[0]
+            "border_checking",
+            this.selected_item_id
           );
           marker.addTo(this.callback_layer.select_Layer).on("click", () => {
             this.select_layer_object = marker;
@@ -509,8 +433,8 @@ export default {
 }
 #map {
   position: relative;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
+  height: 91vh;
+  background: rgba(85, 63, 63, 0.5);
 }
 .edit_switch {
   position: absolute;
@@ -528,23 +452,8 @@ export default {
   max-width: 100vw;
   height: 80vh;
 }
-.selector {
-  height: 100%;
-  overflow: scroll;
-}
-.selector::-webkit-scrollbar {
-  width: 2px;
-  background: #fff;
-}
-.selector::-webkit-scrollbar-thumb {
-  background: #1976d2;
-}
-.layer_img {
-  height: 140px;
-  max-width: 150px;
-}
-.layer_img:hover {
-  cursor: pointer;
+.selector_main {
+  overflow: hidden;
 }
 </style>
 

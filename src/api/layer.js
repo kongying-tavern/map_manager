@@ -24,6 +24,9 @@ function icon_bg(type) {
         case 'border_on':
             options.shadowUrl = 'https://assets.yuanshen.site/icons/loc_02_on.png'
             break;
+        case 'border_checking':
+            options.shadowUrl = 'https://assets.yuanshen.site/icons/loc_02_submit.png'
+            break;
         case "none":
             options = {
                 iconSize: [22, 22], // size of the icon
@@ -59,7 +62,7 @@ function create_geojson(data) {
                 popupContent: i.content,
             },
             icon_src: i.icon,
-            imgsrc: i.resource == null ? `https://yuanshen.site/comment_png/${i.mlayer}_${i.mitemId}.jpg`:i.resource,
+            imgsrc: i.resource,
             layer_id: i.mlayer,
             id: i.id,
         });

@@ -7,10 +7,17 @@
           layerdata.feature.id
         }}
       </p>
-      <img
+      <q-img
         class="layer_img"
-        src="https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fimage.biaobaiju.com%2Fuploads%2F20190705%2F23%2F1562339421-qBMEIovHsu.jpg&refer=http%3A%2F%2Fimage.biaobaiju.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg?sec=1639815497&t=6efef5d609896fdcf02496ad07e94478"
-      />
+        :src="layerdata.feature.imgsrc"
+        spinner-color="primary"
+      >
+        <template v-slot:error>
+          <div class="absolute-full flex flex-center bg-primary text-white">
+            没有相关图片
+          </div>
+        </template>
+      </q-img>
       <p>
         {{ layerdata.feature.properties.popupContent }}
       </p>
@@ -39,7 +46,8 @@ export default {
     return {};
   },
   props: ["layerdata", "map"],
-  mounted() {},
+  mounted() {
+  },
   methods: {
     //将操作点位的数据传至vuex state
     //type=>1,修改信息;2,更改坐标

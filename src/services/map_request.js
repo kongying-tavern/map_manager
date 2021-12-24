@@ -6,13 +6,15 @@ import md5 from "js-md5";
 async function defalut_request(method, url) {
     let ts = Date.now() - Cookies.get("time_difference");
     let sign = md5(ts + "site.yuanshen");
-    return axios({
-        method: method,
-        url: url,
-        headers: { ts: ts, sign: sign },
-    }).catch(error => {
+    try {
+        return await axios({
+            method: method,
+            url: url,
+            headers: { ts: ts, sign: sign }
+        });
+    } catch (error) {
         alert(error);
-    });
+    }
 
 }
 //请求点位数据信息
@@ -24,7 +26,17 @@ function layer_data_select(id) {
     return defalut_request('get', `http://api.yuanshen.site:8089/api/marker/${id}`)
 }
 //按关键字查询点位信息
-function layer_keyword_select(keyword) {
+function layer_type_keyword_select(keyword) {
     return defalut_request('get', `http://api.yuanshen.site:8089/api/option?keyword=${keyword}`)
 }
-export { defalut_request, options_type_select, layer_data_select, layer_keyword_select }
+//按关键字查询点位列表信息
+function layer_item_keyword_select(id, keyword) {
+    return defalut_request('get', `http://api.yuanshen.site:8089/api/basic/marker/${id}?keyword=${keyword}`)
+}
+export {
+    defalut_request,
+    options_type_select,
+    layer_data_select,
+    layer_type_keyword_select,
+    layer_item_keyword_select,
+}

@@ -26,8 +26,6 @@
           <q-td class="text-center">
             <q-checkbox
               v-model="props.row.visibility"
-              :true-value="1"
-              :false-value="0"
               @input="data_freeze('area', props.row)"
             />
           </q-td>
@@ -73,8 +71,6 @@
           <q-td class="text-center">
             <q-checkbox
               v-model="props.row.visibility"
-              :true-value="1"
-              :false-value="0"
               @input="data_freeze('type', props.row)"
             />
           </q-td>
@@ -106,8 +102,6 @@
           <q-td class="text-center">
             <q-checkbox
               v-model="props.row.visibility"
-              :true-value="1"
-              :false-value="0"
               @input="data_freeze('item', props.row)"
             />
           </q-td>

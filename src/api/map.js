@@ -1,7 +1,7 @@
 //地图初始化
 import * as L from 'leaflet'
 import "leaflet/dist/leaflet.css";
-function initmap(map) {
+function initmap(map, area_idx = 'MD') {
     //初始化地图中心和地图尺寸
     var mapCenter = [3568, 6286],
         mapSize = [12288, 15360]
@@ -39,24 +39,6 @@ function initmap(map) {
         zoomControl: false,
     });
     map = mapdata;
-    //底部外链，在移动端无需使用
-    // L.control
-    //     .attribution({
-    //         prefix: `
-    //   <footer role='contentinfo' class='footer'>
-    //     <a href='/docs/disclaimer.html' target='_blank' title='空荧酒馆免责声明'>免责声明</a>
-    //     <a href='/join' target='_blank' target='_blank' title='加入我们'>招募</a>
-    //     <a href='https://support.qq.com/products/321980/blog/505810' target='_blank' rel='noopener noreferrer' title='空荧酒馆原神地图更新日志'>更新日志</a>
-    //     <a href='https://github.com/kongying-tavern' target='_blank' rel='noopener noreferrer' title='GitHub'>GitHub</a>
-    //     <a href='http://beian.miit.gov.cn' target='_blank' rel='noopener noreferrer' title='工业和信息化部域名信息备案管理系统'>蜀ICP备2020028219号-1</a>
-    //   </footer>
-    // 	`,
-    //         position: 'bottomleft',
-    //     })
-    //     .addTo(map)
-    var area_idx = 'MD'
-    // var area_idx_cur = 'TWT'
-    // var area_idx_last = 'TWT'
     //注册地图瓦片
     L.TileLayer.T = L.TileLayer.extend({
         getTileUrl: function (coords) {

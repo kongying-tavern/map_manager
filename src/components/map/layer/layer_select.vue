@@ -62,7 +62,7 @@
       <!-- 表格 -->
       <q-card-section class="type_table">
         <q-table
-          style="max-width:40vw;max-height: 700px"
+          style="max-width: 40vw; max-height: 700px"
           title="点位列表"
           :data="select_layerlist_data"
           :columns="select_layerlist_columns"
@@ -81,10 +81,12 @@
               <q-btn color="primary" label="搜索" style="margin-left: 20px" />
             </div>
           </template>
-          
         </q-table>
       </q-card-section>
     </q-card>
+    <q-inner-loading :showing="selector_loading">
+      <q-spinner-gears size="50px" color="primary" />
+    </q-inner-loading>
   </div>
 </template>
 
@@ -125,6 +127,7 @@ export default {
       ],
       layeritem_keyword_value: "",
       layer_list_selected: [],
+      selector_loading: false,
     };
   },
   methods: {
@@ -147,8 +150,9 @@ export default {
         this.layertype_options = [];
         return;
       }
-      this.loading = true;
+      this.selector_loading = true;
       layer_type_keyword_select(this.layertype_keyword_value).then((res) => {
+        this.selector_loading = false;
         this.layertype_options = [];
         for (let i of res.data.data) {
           for (let j of i.types) {
@@ -165,16 +169,23 @@ export default {
     },
   },
   mounted() {
+    this.selector_loading = true;
     options_type_select().then((res) => {
+      this.selector_loading = false;
       this.layerdata = res.data.data;
     });
   },
   watch: {
     selected_layer_type: function (val) {
-      this.$emit("select_layer", val);
       this.select_layerlist_data = [];
+      this.selector_loading = true;
       layer_data_select(val).then((res) => {
+        this.selector_loading = false;
         this.select_layerlist_data = res.data.data;
+        this.$emit("callback", {
+          id: val,
+          data: this.select_layerlist_data,
+        });
       });
     },
   },

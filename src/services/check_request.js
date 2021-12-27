@@ -3,24 +3,24 @@ import axios from 'axios'
 import { Cookies } from "quasar";
 import md5 from "js-md5";
 //默认请求封装
- async function defalut_request(method, url, data) {
+async function defalut_request(method, url, data) {
     let ts = Date.now() - Cookies.get("time_difference");
     let sign = md5(ts + "site.yuanshen");
     try {
-         return await axios({
-             method: method,
-             url: url,
-             headers: {
-                 'ts': ts,
-                 'sign': sign,
-                 'Content-Type': 'application/json',
-                 'Authorization': localStorage.getItem('user_token')
-             },
-             data: JSON.stringify({ ...data })
-         });
-     } catch (error) {
-         alert(error);
-     }
+        return await axios({
+            method: method,
+            url: url,
+            headers: {
+                'ts': ts,
+                'sign': sign,
+                'Content-Type': 'application/json',
+                'Authorization': localStorage.getItem('user_token')
+            },
+            data: JSON.stringify({ ...data })
+        });
+    } catch (error) {
+        alert(error);
+    }
 
 }
 //提交新增点位到审核
@@ -31,4 +31,8 @@ function addlayer_handle(method, data) {
 function select_addlayer(id = -1) {
     return defalut_request('get', `http://api.yuanshen.site:8089/api/verify/${id}`)
 }
-export { addlayer_handle, select_addlayer }
+//删除待审核点位
+function delete_addlayer(data) {
+    return defalut_request('delete', `http://api.yuanshen.site:8089/api/verify/`, data)
+}
+export { addlayer_handle, select_addlayer, delete_addlayer }

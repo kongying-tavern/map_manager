@@ -42,17 +42,87 @@
               @click="details_handle(props.row)"
               >查看详情</a
             >
-            <a href="javascript:;" @click="exam_handle(props.row)">审核</a>
+            <a
+              href="javascript:;"
+              style="margin-right: 20px"
+              @click="delete_layer(props.row)"
+              >删除</a
+            >
           </q-td>
         </template>
       </q-table>
     </div>
+    <!-- 点位详细信息 -->
+    <q-dialog v-model="selected_layer_window">
+      <q-card>
+        <q-card-section>
+          <q-list bordered separator style="width: 500px">
+            <q-item>
+              <q-item-section> 点位名称 </q-item-section>
+              <q-item-section>
+                <q-input
+                  outlined
+                  v-model="selected_layer_data.itemName"
+                  placeholder="点位名称"
+                >
+                </q-input>
+              </q-item-section>
+            </q-item>
+            <q-item>
+              <q-item-section> 点位描述 </q-item-section>
+              <q-item-section>
+                <q-input
+                  outlined
+                  v-model="selected_layer_data.content"
+                  placeholder="点位描述"
+                >
+                </q-input>
+              </q-item-section>
+            </q-item>
+            <q-item>
+              <q-item-section> 点位图片 </q-item-section>
+              <q-item-section>
+                <q-img :src="selected_layer_data.resource" class="layer_img">
+                  <template v-slot:error>
+                    <div
+                      class="
+                        absolute-full
+                        flex flex-center
+                        bg-primary
+                        text-white
+                      "
+                    >
+                      没有相关图片
+                    </div>
+                  </template>
+                </q-img>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-card-section>
+        <q-card-section>
+          <div class="row">
+            <q-btn
+              color="primary"
+              label="审核通过"
+              style="margin-right: 30px"
+            ></q-btn>
+            <q-btn
+              color="red"
+              label="审核拒绝"
+              style="margin-right: 30px"
+            ></q-btn>
+            <q-btn v-close-popup label="取消"></q-btn>
+          </div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
   </div>
 </template>
 
 <script>
 import { initmap } from "../../api/map";
-import { select_addlayer, addlayer_handle } from "../../services/check_request";
+import { select_addlayer, delete_addlayer } from "../../services/check_request";
 import { layer_register } from "../../api/layer";
 export default {
   data() {
@@ -91,15 +161,51 @@ export default {
         },
       ],
       addlayer_table_data: [],
+      selected_layer_data: {},
       search_value: "",
+      selected_layer_window: false,
       layergroup: [],
     };
+  },
+  methods: {
+    //提示
+    showNotif(msg, time = 3000) {
+      this.$q.notify({
+        message: msg,
+        color: "white",
+        icon: "check",
+        textColor: "black",
+        position: "top",
+        timeout: time,
+      });
+    },
+    //查看详情
+    details_handle(data) {
+      console.log(data);
+      this.selected_layer_data = data;
+      this.selected_layer_window = true;
+    },
+    delete_layer(data) {
+      console.log(data);
+      if (confirm("你确定要删除这个待审核点位吗？") == true) {
+        delete_addlayer({
+          punctuateIds: String(data.id),
+        }).then((res) => {
+          this.showNotif(res.data.msg);
+        });
+      }
+    },
   },
   watch: {
     selected: function (val) {
       this.layergroup.clearLayers();
       for (let i of val) {
-        let marker = layer_register(i.position, "marker");
+        let marker = layer_register(
+          i.position,
+          "marker",
+          "border_off",
+          i.itemId
+        );
         marker.addTo(this.layergroup);
       }
       this.layergroup.addTo(this.map);

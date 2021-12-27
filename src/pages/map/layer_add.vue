@@ -30,7 +30,13 @@
     <!-- 右侧筛选器 -->
     <transition name="fade">
       <div class="selector_main" v-show="edit_state">
-        <layer-select @select_layer="layer_draw"></layer-select>
+        <layer-select
+          @select_layer="layer_draw"
+          @callback="layer_draw"
+        ></layer-select>
+        <q-inner-loading :showing="selector_loading">
+          <q-spinner-gears size="50px" color="primary" />
+        </q-inner-loading>
       </div>
     </transition>
     <!-- 点位弹窗 -->
@@ -150,10 +156,6 @@
 <script>
 import Vue from "vue";
 import BaseContent from "../../components/BaseContent/BaseContent";
-import {
-  layer_data_select,
-  layer_item_keyword_select,
-} from "../../services/map_request";
 import { initmap } from "../../api/map";
 import {
   create_geojson,
@@ -217,46 +219,37 @@ export default {
     },
     //在地图上绘制所选点位下的所有点位
     layer_draw(val) {
-      if (val != null) {
+      if (val.data.length != 0) {
         this.selector_loading = true;
-        // layer_data_select(val).then((res) => {
-        //   if (res.data.data.length != 0) {
-        //     this.select_layer_id = val;
-        //   } else {
-        //     this.select_layer_id = null;
-        //   }
-        //   this.selected_item_id = res.data.data[0].mlayer;
-        //   this.item_list = create_geojson(res.data.data);
-        //   //每次切换点位时清空地图上已有点位
-        //   if (this.callback_layer != null) {
-        //     this.map.removeLayer(this.callback_layer.select_Layer);
-        //   }
-        //   //将点位传入处理函数进行处理，返回leaflet的layer对象,同时对组件挂载
-        //   this.callback_layer = layergroup_register(
-        //     this.item_list[0],
-        //     this.map
-        //   );
-        //   //给点位绑定弹窗的相关处理
-        //   this.callback_layer.select_Layer.eachLayer((layer) => {
-        //     //需要指定一个dom元素用于绑定组件，且需要为其指定宽度，否则leaflet弹窗无法获取容器宽度导致组件内容无法完全展示
-        //     layer.bindPopup(`<div id="popup_window"></div>`);
-        //     layer.on("popupopen", () => {
-        //       this.select_layer_object = layer;
-        //       //使用extend将popup组件挂载至popup弹窗内id为popup_window的dom对象上
-        //       var Profile = Vue.extend(PopupWindow);
-        //       //将对应点位的数据传入组件做进一步处理
-        //       new Profile({
-        //         propsData: {
-        //           layerdata: layer,
-        //           map: this.map,
-        //         },
-        //       }).$mount("#popup_window");
-        //     });
-        //   });
-        //   //在地图上挂载点位
-        //   this.map.addLayer(this.callback_layer.select_Layer);
-        //   this.selector_loading = false;
-        // });
+        this.select_layer_id = val.id;
+        this.selected_item_id = val.data[0].mlayer;
+        this.item_list = create_geojson(val.data);
+        //每次切换点位时清空地图上已有点位
+        if (this.callback_layer != null) {
+          this.map.removeLayer(this.callback_layer.select_Layer);
+        }
+        //将点位传入处理函数进行处理，返回leaflet的layer对象,同时对组件挂载
+        this.callback_layer = layergroup_register(this.item_list[0], this.map);
+        //给点位绑定弹窗的相关处理
+        this.callback_layer.select_Layer.eachLayer((layer) => {
+          //需要指定一个dom元素用于绑定组件，且需要为其指定宽度，否则leaflet弹窗无法获取容器宽度导致组件内容无法完全展示
+          layer.bindPopup(`<div id="popup_window"></div>`);
+          layer.on("popupopen", () => {
+            this.select_layer_object = layer;
+            //使用extend将popup组件挂载至popup弹窗内id为popup_window的dom对象上
+            var Profile = Vue.extend(PopupWindow);
+            //将对应点位的数据传入组件做进一步处理
+            new Profile({
+              propsData: {
+                layerdata: layer,
+                map: this.map,
+              },
+            }).$mount("#popup_window");
+          });
+        });
+        //在地图上挂载点位
+        this.map.addLayer(this.callback_layer.select_Layer);
+        this.selector_loading = false;
       }
     },
     //触发选取文件事件
@@ -302,16 +295,7 @@ export default {
     layer_modify(state, data) {
       this.handle_state = state;
       switch (state) {
-        case 1:
-          console.log(data);
-          this.layer_data = {
-            desc: data.properties.popupContent,
-            img: data.imgsrc,
-          };
-          this.show_img = data.imgsrc;
-          this.layer_window = true;
-          break;
-        case 2:
+        case 0:
           this.layer_data = {
             desc: "",
             img: "",
@@ -319,8 +303,14 @@ export default {
           this.show_img = require("../../assets/img/default.png");
           this.layer_window = true;
           break;
-        case 3:
+        case 1:
+          this.layer_data = {
+            desc: data.properties.popupContent,
+            img: data.imgsrc,
+          };
+          this.show_img = data.imgsrc;
           this.layer_window = true;
+          break;
       }
     },
     //点位拖拽函数
@@ -370,14 +360,18 @@ export default {
         time: 0,
       };
       this.add_loading = true;
-      addlayer_handle("put", data).then((res) => {
+      console.log(this.handle_state);
+      addlayer_handle("put", {
+        optionType: this.handle_state,
+        punctuates: [data],
+      }).then((res) => {
         this.add_loading = false;
         this.layer_window = false;
         if (res.data.data == true) {
           this.layer_mark(this.select_layer_object);
-          this.showNotif("新增成功!");
+          this.showNotif("操作成功!");
         } else {
-          this.showNotif("新增失败!");
+          this.showNotif("操作失败!");
         }
       });
     },

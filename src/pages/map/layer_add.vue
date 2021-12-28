@@ -96,14 +96,7 @@
             @click="update_add_layer(handle_state)"
           />
           <q-btn
-            color="white"
-            text-color="primary"
-            label="取消"
-            v-close-popup
-            style="margin-left: 30px"
-          />
-          <q-btn
-            v-show="this.handle_state == 2 ? true : false"
+            v-show="this.handle_state == 0 ? true : false"
             color="red"
             text-color="white"
             label="撤销新增"
@@ -113,9 +106,16 @@
           />
           <q-btn
             color="red"
-            v-show="this.handle_state != 2 ? true : false"
+            v-show="this.handle_state != 0 ? true : false"
             text-color="white"
             label="删除点位"
+            v-close-popup
+            style="margin-left: 30px"
+          />
+          <q-btn
+            color="white"
+            text-color="primary"
+            label="关闭"
             v-close-popup
             style="margin-left: 30px"
           />
@@ -410,7 +410,7 @@ export default {
           );
           marker.addTo(this.callback_layer.select_Layer).on("click", () => {
             this.select_layer_object = marker;
-            this.layer_modify(2, marker);
+            this.layer_modify(0, marker);
           });
         });
       } else {

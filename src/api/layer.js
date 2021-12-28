@@ -27,6 +27,9 @@ function icon_bg(type) {
         case 'border_checking':
             options.shadowUrl = 'https://assets.yuanshen.site/icons/loc_02_submit.png'
             break;
+        case 'border_unsubmit':
+            options.shadowUrl = 'https://assets.yuanshen.site/icons/loc_02_unsubmit.png'
+            break;
         case "none":
             options = {
                 iconSize: [22, 22], // size of the icon
@@ -74,10 +77,11 @@ function create_geojson(data) {
 * @param {array} latlng 点位坐标参数
 * @param {string} state 调用类型，可选参数为'marker'和'group'，前者为打点新增，后者为渲染点位组中点位
 * @param {string} icontype 生成的点位的框框背景的类型，默认为正常边框，可选项见上方背景生成函数api
-* @param {array} item_id 点位组对象id,用于获取点位的图标等信息
+* @param {array} item_id 点位组对象id
+* @param {array} icon 点位图标
 * @returns {Object} marker对象
  */
-function layer_register(latlng, state, icontype = "border_off", item_id) {
+function layer_register(latlng, state, icontype = "border_off", item_id, icon) {
     //首先判断点位是有边框还是无边框类型
     //再判断点位是否是存档中标记的点位
     //有边框点位通过更改背景图片展示是否标记。无边框类则是更改点位图片
@@ -96,7 +100,7 @@ function layer_register(latlng, state, icontype = "border_off", item_id) {
     var marker = L.marker(marker_order, {
         icon: new icondata({
             className: `mark-${item_id}`,
-            iconUrl: `https://assets.yuanshen.site/icons/${item_id}.png`,
+            iconUrl: icon,
             state: 'off'
         }),
         alt: `${latlng.lat},${latlng.lng}`,
@@ -119,7 +123,7 @@ function layergroup_register(layergroup_data, map) {
     L.geoJSON(layergroup_data, {
         pointToLayer: function (feature, latlng) {
             var key = feature.id;
-            var marker = layer_register(latlng, 'group', undefined, feature.layer_id);
+            var marker = layer_register(latlng, 'group', undefined, feature.layer_id, feature.icon_src);
             markers[key] = marker;
             return marker.addTo(layer_list.select_Layer);
         },

@@ -67,6 +67,16 @@ const asyncRoutesChildren = [
         },
         component: () => import('pages/map/layer_exam.vue')
       },
+      {
+        path: 'layer_manage',
+        name: 'layer_manage',
+        meta: {
+          roles: ['admin'],
+          title: '点位管理',
+          icon: 'flaky',
+        },
+        component: () => import('pages/map/layer_manage.vue')
+      },
     ]
   },
   {

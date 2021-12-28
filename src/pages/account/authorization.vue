@@ -11,7 +11,7 @@
               :columns="columns"
               row-key="name"
             >
-              <!-- 表格内操作按钮插槽 -->
+              <!-- 表格内操作按钮插槽
               <template v-slot:body-cell-handle="props">
                 <q-td class="text-center">
                   <a
@@ -19,7 +19,7 @@
                     >编辑</a
                   >
                 </q-td>
-              </template>
+              </template> -->
             </q-table>
           </div>
         </div>
@@ -29,6 +29,7 @@
 </template>
 
 <script>
+import { user_select } from "../../services/user_request";
 import BaseContent from "../../components/BaseContent/BaseContent";
 export default {
   name: "user_authorization",
@@ -65,6 +66,11 @@ export default {
   },
   components: {
     BaseContent,
+  },
+  mounted() {
+    user_select().then((res) => {
+      console.log(res);
+    });
   },
 };
 </script>

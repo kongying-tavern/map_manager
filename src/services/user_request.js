@@ -23,25 +23,10 @@ async function defalut_request(method, url, data) {
     }
 
 }
-//提交新增点位到审核
-function addlayer_handle(method, data) {
-    return defalut_request(method, "http://api.yuanshen.site:8089/api/punctuate", data)
-}
-//待审核点位查询
-function select_addlayer(id = -1) {
-    return defalut_request('get', `http://api.yuanshen.site:8089/api/verify/${id}`)
-}
-//删除待审核点位
-function delete_addlayer(id) {
-    return defalut_request('delete', `http://api.yuanshen.site:8089/api/verify?punctuateIds=${id}`)
-}
-//待审核点位通过
-function pass_addlayer(data) {
-    return defalut_request('post', `http://api.yuanshen.site:8089/api/verify/`, data)
+//查询所有用户
+function user_select() {
+    return defalut_request("get", "http://api.yuanshen.site:8089/api/user/-1")
 }
 export {
-    addlayer_handle,
-    select_addlayer,
-    delete_addlayer,
-    pass_addlayer
+    user_select
 }

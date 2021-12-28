@@ -10,14 +10,19 @@
           :disable="selected.length == 0 ? true : false"
           color="primary"
         ></q-btn>
+        <q-btn
+          label="批量退回"
+          style="margin-left:30px"
+          :disable="selected.length == 0 ? true : false"
+          color="red"
+        ></q-btn>
       </div>
       <q-table
         title="点位审核表"
-        style="height: 80vh"
+        style="max-height: 80vh"
         :data="addlayer_table_data"
         :columns="addlayer_table_columns"
         row-key="id"
-        virtual-scroll
         selection="multiple"
         :selected.sync="selected"
         :rows-per-page-options="[0]"
@@ -42,12 +47,7 @@
               @click="details_handle(props.row)"
               >查看详情</a
             >
-            <a
-              href="javascript:;"
-              style="margin-right: 20px"
-              @click="delete_layer(props.row)"
-              >删除</a
-            >
+            <a href="javascript:;" @click="delete_layer(props.row)">删除</a>
           </q-td>
         </template>
       </q-table>
@@ -179,24 +179,36 @@ export default {
         timeout: time,
       });
     },
+    //生成点位
+    layer_request() {
+      select_addlayer().then((res) => {
+        this.addlayer_table_data = [];
+        for (let i of res.data.data) {
+          i.position = i.position.split(",");
+          i.position = {
+            lat: i.position[0],
+            lng: i.position[1],
+          };
+          this.addlayer_table_data.push(i);
+        }
+      });
+    },
     //查看详情
     details_handle(data) {
-      console.log(data);
       this.selected_layer_data = data;
       this.selected_layer_window = true;
     },
     delete_layer(data) {
-      console.log(data);
       if (confirm("你确定要删除这个待审核点位吗？") == true) {
-        delete_addlayer({
-          punctuateIds: String(data.id),
-        }).then((res) => {
+        delete_addlayer(data.id).then((res) => {
           this.showNotif(res.data.msg);
+          this.layer_request();
         });
       }
     },
   },
   watch: {
+    //地图上绘制点位
     selected: function (val) {
       this.layergroup.clearLayers();
       for (let i of val) {
@@ -215,16 +227,7 @@ export default {
     //注册地图
     this.map = initmap(this.map);
     this.layergroup = L.layerGroup();
-    select_addlayer().then((res) => {
-      for (let i of res.data.data) {
-        i.position = i.position.split(",");
-        i.position = {
-          lat: i.position[0],
-          lng: i.position[1],
-        };
-        this.addlayer_table_data.push(i);
-      }
-    });
+    this.layer_request();
   },
 };
 </script>

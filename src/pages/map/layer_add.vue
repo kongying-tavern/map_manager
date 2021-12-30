@@ -14,6 +14,13 @@
           <q-toggle v-model="add_mode" size="50px" />
           <span class="edit_text">打点模式</span>
         </div>
+        <q-btn
+          v-show="select_layer_id == null ? false : true"
+          style="margin: 10px 0 0 10px"
+          color="primary"
+          label="刷新当前点位"
+          @click="refresh_layer"
+        ></q-btn>
       </div>
 
       <!-- 地图容器 -->
@@ -31,8 +38,11 @@
     <transition name="fade">
       <div class="selector_main" v-show="edit_state">
         <layer-select
+          :refresh="refresh_trigger"
+          :add_mode="add_mode"
           @select_layer="layer_draw"
           @callback="layer_draw"
+          @clear="clear_cache"
         ></layer-select>
         <q-inner-loading :showing="selector_loading">
           <q-spinner-gears size="50px" color="primary" />
@@ -96,7 +106,7 @@
             @click="update_add_layer(handle_state)"
           />
           <q-btn
-            v-show="this.handle_state == 0 ? true : false"
+            v-show="this.handle_state == 1 ? true : false"
             color="red"
             text-color="white"
             label="撤销新增"
@@ -106,7 +116,7 @@
           />
           <q-btn
             color="red"
-            v-show="this.handle_state != 0 ? true : false"
+            v-show="this.handle_state != 1 ? true : false"
             text-color="white"
             label="删除点位"
             v-close-popup
@@ -183,6 +193,7 @@ export default {
       item_list: null,
       add_mode: false,
       drag_mode: false,
+      select_layer_data: null,
       select_layer_id: null,
       select_layer_object: null,
       cropper_window: false,
@@ -198,6 +209,9 @@ export default {
         table: true,
       },
       selected_item_id: "",
+      callback_layer: undefined,
+      addlayer_cache: undefined,
+      refresh_trigger: true,
     };
   },
   components: {
@@ -220,6 +234,7 @@ export default {
     //在地图上绘制所选点位下的所有点位
     layer_draw(val) {
       if (val.data.length != 0) {
+        this.select_layer_data = val;
         this.selector_loading = true;
         this.select_layer_id = val.id;
         this.selected_item_id = val.data[0].mlayer;
@@ -291,11 +306,11 @@ export default {
       this.layer_data.img = data;
     },
     //单位操作弹窗函数
-    //1，修改打点 2，新增打点 3，批量修改
+    //1，新增 2，修改
     layer_modify(state, data) {
       this.handle_state = state;
       switch (state) {
-        case 0:
+        case 1:
           this.layer_data = {
             desc: "",
             img: "",
@@ -303,7 +318,7 @@ export default {
           this.show_img = require("../../assets/img/default.png");
           this.layer_window = true;
           break;
-        case 1:
+        case 2:
           this.layer_data = {
             desc: data.properties.popupContent,
             img: data.imgsrc,
@@ -360,25 +375,38 @@ export default {
         time: 0,
       };
       this.add_loading = true;
-      console.log(this.handle_state);
       addlayer_handle("put", {
         optionType: this.handle_state,
         punctuates: [data],
       }).then((res) => {
+        if (this.handle_state == 1) {
+          this.select_layer_object.off("click");
+        }
         this.add_loading = false;
         this.layer_window = false;
         if (res.data.data == true) {
-          this.layer_mark(this.select_layer_object);
           this.showNotif("操作成功!");
         } else {
           this.showNotif("操作失败!");
         }
       });
     },
+    //删除缓存
+    clear_cache(){
+      this.addlayer_cache.clearLayers();
+    },
+    //刷新点位
+    refresh_layer() {
+      if (confirm("你确定要刷新当前点位么？")) {
+        this.refresh_trigger = !this.refresh_trigger;
+      }
+    },
   },
   mounted() {
     //注册地图
     this.map = initmap(this.map);
+    //注册打点缓存组
+    this.addlayer_cache = L.layerGroup();
   },
   watch: {
     //检测文件上传事件（不使用@input，触发时间节点有差异，可能会导致奇怪的bug）
@@ -405,13 +433,15 @@ export default {
           var marker = layer_register(
             event.latlng,
             "marker",
-            "border_checking",
-            this.selected_item_id
+            "border_unsubmit",
+            this.selected_item_id,
+            this.item_list[0].features[0].icon_src
           );
-          marker.addTo(this.callback_layer.select_Layer).on("click", () => {
+          marker.addTo(this.addlayer_cache).on("click", () => {
             this.select_layer_object = marker;
-            this.layer_modify(0, marker);
+            this.layer_modify(1, marker);
           });
+          this.map.addLayer(this.addlayer_cache);
         });
       } else {
         this.map.off("click");

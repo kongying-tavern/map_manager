@@ -68,6 +68,10 @@ function create_geojson(data) {
             imgsrc: i.resource,
             layer_id: i.mlayer,
             id: i.id,
+            check_in: i.check_in,
+            data: {
+                ...i
+            }
         });
     }
     return item_list
@@ -123,7 +127,7 @@ function layergroup_register(layergroup_data, map) {
     L.geoJSON(layergroup_data, {
         pointToLayer: function (feature, latlng) {
             var key = feature.id;
-            var marker = layer_register(latlng, 'group', undefined, feature.layer_id, feature.icon_src);
+            var marker = layer_register(latlng, 'group', feature.check_in ? 'border_checking' : undefined, feature.layer_id, feature.icon_src);
             markers[key] = marker;
             return marker.addTo(layer_list.select_Layer);
         },

@@ -23,15 +23,11 @@ async function defalut_request(method, url, data) {
     }
 
 }
-//查询用户信息
-function user_select() {
-    return defalut_request("get", "http://api.yuanshen.site:8089/api/user/info")
+//查询权限列表
+function role_list_select() {
+    return defalut_request("get", "http://api.yuanshen.site:8089/api/role/list")
 }
-//查询用户权限
-function user_role_select(id) {
-    return defalut_request('get', `http://api.yuanshen.site:8089/api/role/${id}`)
-}
+
 export {
-    user_select,
-    user_role_select
+    role_list_select,
 }

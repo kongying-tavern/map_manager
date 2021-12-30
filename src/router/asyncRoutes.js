@@ -8,7 +8,7 @@ const asyncRoutesChildren = [
     path: '/',
     name: 'home',
     meta: {
-      roles: ['admin', 'editor', 'test'],
+      roles: ['ROLE_ADMIN', 'editor', 'test'],
       title: '主页',
       icon: 'home',
       keepAlive: true
@@ -19,7 +19,7 @@ const asyncRoutesChildren = [
     path: '/authorization',
     name: 'authorization',
     meta: {
-      roles: ['admin'],
+      roles: ['ROLE_ADMIN'],
       title: '权限管理',
       icon: 'account_circle',
       keepAlive: true
@@ -30,7 +30,7 @@ const asyncRoutesChildren = [
     path: '/map',
     name: 'map',
     meta: {
-      roles: ['admin'],
+      roles: ['ROLE_ADMIN'],
       title: '原神地图',
       icon: 'dashboard',
       keepAlive: true
@@ -41,7 +41,7 @@ const asyncRoutesChildren = [
         path: 'map_maintain',
         name: 'map_maintain',
         meta: {
-          roles: ['admin'],
+          roles: ['ROLE_ADMIN'],
           title: '地图维护',
           icon: 'photo_library',
         },
@@ -51,7 +51,7 @@ const asyncRoutesChildren = [
         path: 'layer_add',
         name: 'layer_add',
         meta: {
-          roles: ['admin'],
+          roles: ['ROLE_ADMIN'],
           title: '点位维护',
           icon: 'add_location',
         },
@@ -61,7 +61,7 @@ const asyncRoutesChildren = [
         path: 'layer_exam',
         name: 'layer_exam',
         meta: {
-          roles: ['admin'],
+          roles: ['ROLE_ADMIN'],
           title: '点位审核',
           icon: 'flaky',
         },
@@ -71,9 +71,9 @@ const asyncRoutesChildren = [
         path: 'layer_manage',
         name: 'layer_manage',
         meta: {
-          roles: ['admin'],
+          roles: ['ROLE_ADMIN'],
           title: '点位管理',
-          icon: 'flaky',
+          icon: 'edit_location_alt',
         },
         component: () => import('pages/map/layer_manage.vue')
       },
@@ -83,7 +83,7 @@ const asyncRoutesChildren = [
     path: '/achievement',
     name: 'achievement',
     meta: {
-      roles: ['admin'],
+      roles: ['ROLE_ADMIN'],
       title: '成就系统',
       icon: 'accessible_forward',
       keepAlive: true
@@ -94,7 +94,7 @@ const asyncRoutesChildren = [
         path: 'edit',
         name: 'edit',
         meta: {
-          roles: ['admin'],
+          roles: ['ROLE_ADMIN'],
           title: '成就项编辑',
           icon: 'create',
         },
@@ -106,7 +106,7 @@ const asyncRoutesChildren = [
     path: '*', // This must be placed at the bottom
     redirect: '/NoFound404',
     meta: {
-      roles: ['admin', 'test'],
+      roles: ['ROLE_ADMIN', 'test'],
       isHidden: true
     }
   }

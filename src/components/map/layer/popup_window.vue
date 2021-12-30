@@ -9,7 +9,11 @@
       </p>
       <q-img
         class="layer_img"
-        :src="layerdata.feature.imgsrc"
+        :src="
+          layerdata.feature.imgsrc == null
+            ? 'https://assets.yuanshen.site/images/noImage.png'
+            : layerdata.feature.imgsrc
+        "
         spinner-color="primary"
       >
         <template v-slot:error>
@@ -19,10 +23,13 @@
         </template>
       </q-img>
       <p>
-        {{ layerdata.feature.properties.popupContent }}
+        点位描述：{{ layerdata.feature.properties.popupContent }}
       </p>
     </div>
-    <div class="btns row justify-between">
+    <div
+      class="btns row justify-between"
+      v-show="this.layerdata.feature.check_in == true ? false : true"
+    >
       <q-btn flat label="修改" color="primary" @click="layer_handel(1)"></q-btn>
       <q-btn flat label="标记" color="primary" @click="layer_mark"></q-btn>
       <q-btn
@@ -31,6 +38,17 @@
         color="primary"
         @click="layer_handel(2)"
       ></q-btn>
+    </div>
+    <div
+      class="btns row justify-between"
+      v-show="this.layerdata.feature.check_in == true ? true : false"
+    >
+      <p style="width: 100%">
+        审核状态：{{ this.layerdata.feature.data.status | status_filter }}
+      </p>
+      <p style="width: 100%">
+        审核意见：{{ this.layerdata.feature.data.auditRemark }}
+      </p>
     </div>
   </div>
 </template>
@@ -47,6 +65,7 @@ export default {
   },
   props: ["layerdata", "map"],
   mounted() {
+    console.log(this.layerdata);
   },
   methods: {
     //将操作点位的数据传至vuex state
@@ -72,6 +91,22 @@ export default {
       this.layerdata.setIcon(new icondata({ ...layer_icondata.options }));
     },
   },
+  filters: {
+    status_filter: function (val) {
+      switch (val) {
+        case 0:
+          val = "审核中";
+          break;
+        case 1:
+          val = "审核通过";
+          break;
+        case 2:
+          val = "审核被退回";
+          break;
+      }
+      return val;
+    },
+  },
 };
 </script>
 <style scoped>
@@ -85,9 +120,5 @@ p {
   margin: 0 auto;
   width: 200px;
   height: 200px;
-}
-.text {
-  width: 90%;
-  margin: 10px auto;
 }
 </style>

@@ -64,6 +64,7 @@
 
 <script>
 import { login } from "../../services/normal_request";
+import { user_select, user_role_select } from "../../services/user_request";
 import LottieWebCimo from "../../components/LottieWebCimo/LottieWebCimo";
 export default {
   name: "logon",
@@ -113,6 +114,11 @@ export default {
                 timeout: 1500,
               });
             });
+            user_select().then((res) => {
+              user_role_select(res.data.data.roles[0]).then((res) => {
+                localStorage.setItem("user_role", res.data.data.roleCode);
+              });
+            });
           })
           .catch((error) => {
             this.loading = !this.loading;
@@ -125,41 +131,9 @@ export default {
             });
           });
       }
-      // if (this.username === "admin" || this.username === "test") {
-      //   sessionStorage.setItem("access_token", 972784674);
-      //   sessionStorage.setItem("user_role", this.username);
-      //   const lt = setTimeout(() => {
-      //     this.$router.push("/").then((e) => {
-      //       this.$q.notify({
-      //         icon: "insert_emoticon",
-      //         message: "hi，cimo 欢迎回来",
-      //         color: "green",
-      //         position: "top",
-      //         timeout: 1500,
-      //       });
-      //       clearTimeout(lt);
-      //       this.loading = !this.loading;
-      //       // 如果是 electron 则改变窗口大小
-      //       if (process.env.MODE === "electron") {
-      //         this.$q.electron.remote.getCurrentWindow().setSize(1023, 768);
-      //         this.$q.electron.remote.getCurrentWindow().center();
-      //       }
-      //     });
-      //   }, Math.random() * 3000);
-      // } else {
-      //   this.loading = !this.loading;
-      //   this.$q.notify({
-      //     icon: "announcement",
-      //     message: "账号错误",
-      //     color: "red",
-      //     position: "top",
-      //     timeout: 1500,
-      //   });
-      // }
     },
   },
-  mounted() {
-  },
+  mounted() {},
 };
 </script>
 

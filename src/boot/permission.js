@@ -46,12 +46,11 @@ export default async ({ app, router, Vue, store }) => {
       })
     }
     else {
-      const userRole = 'admin'
+      const userRole = localStorage.getItem('user_role')
       if (userRole && store.getters.getRoutes.length) {
         next()
       } else {
         // Simulate when user permissions do not exist, obtain user permissions
-        const userRole = 'admin'
         // And set the corresponding route according to the permissions
         store.commit('SET_ROLES_AND_ROUTES', userRole)
         // If you are prompted that addRoutes is deprecated, use the spread operator to complete the operation

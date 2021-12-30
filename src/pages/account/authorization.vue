@@ -2,24 +2,17 @@
 <template>
   <base-content>
     <div class="user_authorization">
-      <div class="container q-pa-lg q-col-gutter-md">
+      <div class="contain er q-pa-lg q-col-gutter-md">
         <div class="row justify-between q-col-gutter-md">
           <div class="col-xs-12 col-md-12 q-gutter-md">
             <q-table
+              style="max-height: 50vh"
               title="角色权限管理"
-              :data="data"
-              :columns="columns"
-              row-key="name"
+              :data="role_data"
+              :columns="role_columns"
+              row-key="roleCode"
+              :rows-per-page-options="[0]"
             >
-              <!-- 表格内操作按钮插槽
-              <template v-slot:body-cell-handle="props">
-                <q-td class="text-center">
-                  <a
-                    href="javascript:;"
-                    >编辑</a
-                  >
-                </q-td>
-              </template> -->
             </q-table>
           </div>
         </div>
@@ -29,29 +22,29 @@
 </template>
 
 <script>
-import { user_select } from "../../services/user_request";
+import { role_list_select } from "../../services/admin_request";
 import BaseContent from "../../components/BaseContent/BaseContent";
 export default {
   name: "user_authorization",
   data() {
     return {
-      columns: [
+      role_columns: [
         {
-          name: "role_code",
+          name: "roleCode",
           label: "角色权限编码",
-          field: "role_code",
+          field: "roleCode",
           align: "center",
         },
         {
-          name: "role_name",
-          label: "角色权限编码名称",
-          field: "role_name",
+          name: "roleName",
+          label: "角色权限名称",
+          field: "roleName",
           align: "center",
         },
         {
-          name: "role_menu",
-          label: "角色权限菜单",
-          field: "role_menu",
+          name: "roleDesc",
+          label: "角色权限备注",
+          field: "roleDesc",
           align: "center",
         },
         {
@@ -61,15 +54,15 @@ export default {
           align: "center",
         },
       ],
-      data: [],
+      role_data: [],
     };
   },
   components: {
     BaseContent,
   },
   mounted() {
-    user_select().then((res) => {
-      console.log(res);
+    role_list_select().then((res) => {
+      this.role_data = res.data.data;
     });
   },
 };

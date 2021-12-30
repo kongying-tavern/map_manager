@@ -12,7 +12,7 @@
         ></q-btn>
         <q-btn
           label="批量退回"
-          style="margin-left:30px"
+          style="margin-left: 30px"
           :disable="selected.length == 0 ? true : false"
           color="red"
         ></q-btn>
@@ -82,7 +82,14 @@
             <q-item>
               <q-item-section> 点位图片 </q-item-section>
               <q-item-section>
-                <q-img :src="selected_layer_data.resource" class="layer_img">
+                <q-img
+                  :src="
+                    selected_layer_data.resource == null
+                      ? 'https://assets.yuanshen.site/images/noImage.png'
+                      : selected_layer_data.resource
+                  "
+                  class="layer_img"
+                >
                   <template v-slot:error>
                     <div
                       class="
@@ -106,13 +113,47 @@
               color="primary"
               label="审核通过"
               style="margin-right: 30px"
+              @click="exam_pass"
             ></q-btn>
             <q-btn
               color="red"
               label="审核拒绝"
               style="margin-right: 30px"
+              @click="refuse_window = true"
             ></q-btn>
             <q-btn v-close-popup label="取消"></q-btn>
+          </div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+    <!-- 点位详细信息 -->
+    <q-dialog v-model="refuse_window">
+      <q-card>
+        <q-card-section>
+          <q-list bordered separator style="width: 500px">
+            <q-item>
+              <q-item-section> 退回理由 </q-item-section>
+              <q-item-section>
+                <q-input
+                  outlined
+                  v-model="refuse_reason"
+                  placeholder="请输入退回理由"
+                >
+                </q-input>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-card-section>
+        <q-card-section>
+          <div class="row">
+            <q-btn
+              :disable="refuse_reason == '' ? true : false"
+              color="primary"
+              label="确定"
+              style="margin-right: 30px"
+              @click="exam_refuse"
+            ></q-btn>
+            <q-btn v-close-popup label="返回"></q-btn>
           </div>
         </q-card-section>
       </q-card>
@@ -122,7 +163,12 @@
 
 <script>
 import { initmap } from "../../api/map";
-import { select_addlayer, delete_addlayer } from "../../services/check_request";
+import {
+  select_addlayer,
+  delete_addlayer,
+  pass_addlayer,
+  refuse_addlayer,
+} from "../../services/check_request";
 import { layer_register } from "../../api/layer";
 export default {
   data() {
@@ -148,9 +194,29 @@ export default {
           align: "center",
         },
         {
+          name: "optionType",
+          label: "操作类型",
+          field: "optionType",
+          align: "center",
+          format:(val) => {
+            switch (val) {
+              case 1:
+                val = "新增";
+                break;
+              case 2:
+                val = "修改";
+                break;
+              case 3:
+                val = "删除";
+                break;
+            }
+            return val;
+          },
+        },
+        {
           name: "creatorId",
           label: "上传人",
-          field: "content",
+          field: "creatorId",
           align: "center",
         },
         {
@@ -165,6 +231,8 @@ export default {
       search_value: "",
       selected_layer_window: false,
       layergroup: [],
+      refuse_reason: "",
+      refuse_window: false,
     };
   },
   methods: {
@@ -189,7 +257,9 @@ export default {
             lat: i.position[0],
             lng: i.position[1],
           };
-          this.addlayer_table_data.push(i);
+          if (i.status == 0) {
+            this.addlayer_table_data.push(i);
+          }
         }
       });
     },
@@ -198,6 +268,38 @@ export default {
       this.selected_layer_data = data;
       this.selected_layer_window = true;
     },
+    //通过点位
+    exam_pass() {
+      pass_addlayer({
+        auditRemark: "null",
+        punctuateIds: [this.selected_layer_data.id],
+      }).then((res) => {
+        this.refuse_window = false;
+        this.selected_layer_window = false;
+        this.showNotif(res.data.msg);
+        this.layer_request();
+      });
+    },
+    exam_refuse() {
+      refuse_addlayer({
+        auditRemark: this.refuse_reason,
+        punctuateIds: [this.selected_layer_data.id],
+      }).then((res) => {
+        this.refuse_window = false;
+        this.selected_layer_window = false;
+        this.showNotif(res.data.msg);
+        this.layer_request();
+      });
+    },
+    batch_process(type) {
+      switch (type) {
+        case "pass":
+          break;
+        case "refuse":
+          break;
+      }
+    },
+    //删除点位
     delete_layer(data) {
       if (confirm("你确定要删除这个待审核点位吗？") == true) {
         delete_addlayer(data.id).then((res) => {

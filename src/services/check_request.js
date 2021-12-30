@@ -19,9 +19,17 @@ async function defalut_request(method, url, data) {
             data: JSON.stringify({ ...data })
         });
     } catch (error) {
-        alert(error);
+        alert(`错误：${error.response.data.msg}`);
     }
 
+}
+//用户自查询标点
+function user_addlayer_select(itemid = -1, keyword = '') {
+    let url = `http://api.yuanshen.site:8089/api/punctuate/${itemid}`
+    if (keyword != '') {
+        url += `keyword=${keyword}`
+    }
+    return defalut_request('get', url)
 }
 //提交新增点位到审核
 function addlayer_handle(method, data) {
@@ -39,9 +47,15 @@ function delete_addlayer(id) {
 function pass_addlayer(data) {
     return defalut_request('post', `http://api.yuanshen.site:8089/api/verify/`, data)
 }
+//待审核点位拒绝
+function refuse_addlayer(data) {
+    return defalut_request('post', `http://api.yuanshen.site:8089/api/verify/reject`, data)
+}
 export {
     addlayer_handle,
     select_addlayer,
     delete_addlayer,
-    pass_addlayer
+    pass_addlayer,
+    user_addlayer_select,
+    refuse_addlayer
 }

@@ -96,6 +96,7 @@ import {
   options_type_select,
   layer_data_select,
 } from "../../../services/map_request";
+import { user_addlayer_select } from "../../../services/check_request";
 export default {
   name: "LayerSelect",
   data() {
@@ -128,8 +129,11 @@ export default {
       layeritem_keyword_value: "",
       layer_list_selected: [],
       selector_loading: false,
+      cancel_trigger: true,
+      clear_trigger: false,
     };
   },
+  props: ["refresh", "add_mode"],
   methods: {
     //渲染下拉菜单中单选项目的函数
     format_options(data) {
@@ -167,6 +171,36 @@ export default {
         this.loading = false;
       });
     },
+    //点位查询
+    markers_select(val) {
+      this.cancel_trigger = true;
+      this.select_layerlist_data = [];
+      this.selector_loading = true;
+      layer_data_select(val).then((res) => {
+        this.selector_loading = false;
+        let array1 = res.data.data;
+        for (let i of array1) {
+          i.check_in = false;
+        }
+        this.select_layerlist_data = array1;
+        user_addlayer_select(val).then((res) => {
+          for (let i of res.data.data) {
+            i.mlayer = this.select_layerlist_data[0].mlayer;
+            i.title = i.itemName;
+          }
+          let array2 = res.data.data;
+          for (let i of array2) {
+            i.check_in = true;
+          }
+          this.select_layerlist_data =
+            this.select_layerlist_data.concat(array2);
+          this.$emit("callback", {
+            id: val,
+            data: this.select_layerlist_data,
+          });
+        });
+      });
+    },
   },
   mounted() {
     this.selector_loading = true;
@@ -176,17 +210,30 @@ export default {
     });
   },
   watch: {
-    selected_layer_type: function (val) {
-      this.select_layerlist_data = [];
-      this.selector_loading = true;
-      layer_data_select(val).then((res) => {
-        this.selector_loading = false;
-        this.select_layerlist_data = res.data.data;
-        this.$emit("callback", {
-          id: val,
-          data: this.select_layerlist_data,
-        });
-      });
+    selected_layer_type: function (val, oldval) {
+      if (this.add_mode == true) {
+        if (this.cancel_trigger == true) {
+          if (
+            confirm(
+              "你确定要切换点位么，这会使你所有未提交的点位（红色边框）丢失"
+            )
+          ) {
+            this.markers_select(val);
+            this.$emit("clear", true);
+          } else {
+            this.selected_layer_type = oldval;
+            this.cancel_trigger = false;
+            return;
+          }
+        }
+      } else {
+        this.markers_select(val);
+        this.$emit("clear", true);
+      }
+      this.cancel_trigger = true;
+    },
+    refresh: function () {
+      this.markers_select(this.selected_layer_type);
     },
   },
 };

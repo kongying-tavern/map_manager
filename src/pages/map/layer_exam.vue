@@ -249,6 +249,7 @@ export default {
     },
     //生成点位
     layer_request() {
+      this.selected=[];
       select_addlayer().then((res) => {
         this.addlayer_table_data = [];
         for (let i of res.data.data) {
@@ -317,8 +318,9 @@ export default {
         let marker = layer_register(
           i.position,
           "marker",
-          "border_off",
-          i.itemId
+          "border_checking",
+          i.itemId,
+          i.icon
         );
         marker.addTo(this.layergroup);
       }

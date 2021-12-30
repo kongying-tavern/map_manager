@@ -63,8 +63,8 @@
       <q-card-section class="type_table">
         <q-table
           style="max-width: 40vw; max-height: 700px"
-          title="点位列表"
-          :data="select_layerlist_data"
+          title="审核点位列表"
+          :data="examing_laterlist_data"
           :columns="select_layerlist_columns"
           selection="multiple"
           :selected.sync="layer_list_selected"
@@ -106,6 +106,7 @@ export default {
       layertype_options: [],
       selected_layer_type: "",
       select_layerlist_data: [],
+      examing_laterlist_data: [],
       select_layerlist_columns: [
         {
           name: "id",
@@ -114,15 +115,41 @@ export default {
           align: "center",
         },
         {
-          name: "title",
+          name: "itemName",
           label: "点位名称",
-          field: "title",
+          field: "itemName",
           align: "center",
         },
         {
           name: "content",
           label: "点位描述",
           field: "content",
+          align: "center",
+        },
+        {
+          name: "status",
+          label: "审核状态",
+          field: "status",
+          align: "center",
+          format: (val) => {
+            switch (val) {
+              case 0:
+                val = "审核中";
+                break;
+              case 1:
+                val = "通过";
+                break;
+              case 2:
+                val = "被退回";
+                break;
+            }
+            return val;
+          },
+        },
+        {
+          name: "auditRemark",
+          label: "审核意见",
+          field: "auditRemark",
           align: "center",
         },
       ],
@@ -184,13 +211,15 @@ export default {
         }
         this.select_layerlist_data = array1;
         user_addlayer_select(val).then((res) => {
+          this.examing_laterlist_data = res.data.data;
+          let array2 = [];
           for (let i of res.data.data) {
-            i.mlayer = this.select_layerlist_data[0].mlayer;
-            i.title = i.itemName;
-          }
-          let array2 = res.data.data;
-          for (let i of array2) {
-            i.check_in = true;
+            if (i.status != 1) {
+              i.mlayer = this.select_layerlist_data[0].mlayer;
+              i.title = i.itemName;
+              i.check_in = true;
+              array2.push(i);
+            }
           }
           this.select_layerlist_data =
             this.select_layerlist_data.concat(array2);

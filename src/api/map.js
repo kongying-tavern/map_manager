@@ -1,7 +1,11 @@
 //地图初始化
 import * as L from 'leaflet'
 import "leaflet/dist/leaflet.css";
-function initmap(map, area_idx = 'MD') {
+const addmode_map_state = {
+
+}
+function initmap(map, area_idx = 'mainworld') {
+    map = null;
     //初始化地图中心和地图尺寸
     var mapCenter = [3568, 6286],
         mapSize = [12288, 15360]
@@ -38,6 +42,22 @@ function initmap(map, area_idx = 'MD') {
         attributionControl: false,
         zoomControl: false,
     });
+    // let mapdata = L.map('map', {
+    //     crs: mapCRS,
+    //     center: [3200, -3000],
+    //     zoomDelta: 0,
+    //     zoomSnap: 0.5,
+    //     maxZoom: 2,
+    //     minZoom: -4,
+    //     zoom: -3,
+    //     tap: false,
+    //     // maxBounds: L.latLngBounds(
+    //     //     L.latLng(-mapCenter[0], -mapCenter[1]),
+    //     //     L.latLng(mapSize[0] - mapCenter[0], mapSize[1] - mapCenter[1])
+    //     // ),
+    //     attributionControl: false,
+    //     zoomControl: false,
+    // });
     map = mapdata;
     //注册地图瓦片
     L.TileLayer.T = L.TileLayer.extend({
@@ -46,13 +66,14 @@ function initmap(map, area_idx = 'MD') {
                 y = coords.y,
                 z = coords.z + 13
             switch (area_idx) {
-                case 'MD':
-                case 'LY':
+                case 'mainworld':
                     return `https://assets.yuanshen.site/tiles_dq3/${z}/${x}_${y}.jpg`
                 case 'QD':
                     return `https://assets.yuanshen.site/tiles_qd/${z}/${x}_${y}.jpg`
                 case 'QD1':
                     return `https://assets.yuanshen.site/tiles_qd1/${z}/${x}_${y}.jpg`
+                case 'YXG':
+                    return `https://assets.yuanshen.site/tiles_yxg/${z}/${x}_${y}.jpg`
                 default:
                     return L.Util.emptyImageUrl
             }
@@ -73,4 +94,47 @@ function initmap(map, area_idx = 'MD') {
     map.addLayer(T);
     return map;
 }
-export { initmap }
+function switch_map(map, area_idx) {
+    var mapCenter = [3568, 6286],
+        mapSize = [12288, 15360]
+    let mapset = "";
+    L.TileLayer.T = L.TileLayer.extend({
+        getTileUrl: function (coords) {
+            var x = coords.x,
+                y = coords.y,
+                z = coords.z + 13
+            switch (area_idx) {
+                case 'mainworld':
+                    return `https://assets.yuanshen.site/tiles_dq3/${z}/${x}_${y}.jpg`
+                case 'QD':
+                    return `https://assets.yuanshen.site/tiles_qd/${z}/${x}_${y}.jpg`
+                case 'QD1':
+                    return `https://assets.yuanshen.site/tiles_qd1/${z}/${x}_${y}.jpg`
+                case 'YXG':
+                    return `https://assets.yuanshen.site/tiles_yxg/${z}/${x}_${y}.jpg`
+                default:
+                    return L.Util.emptyImageUrl
+            }
+        },
+        //如果此项为true，在平移后不可见的切片被放入一个队列中，在新的切片开始可见时他们会被取回（而不是动态地创建一个新的）。这理论上可以降低内存使用率并可以去除在需要新的切片时预留内存。
+        reuseTiles: true,
+    });
+    var T = new L.TileLayer.T('', {
+        maxZoom: 10,
+        minZoom: -6,
+        maxNativeZoom: 0,
+        minNativeZoom: -3,
+        bounds: L.latLngBounds(
+            L.latLng(-mapCenter[0], -mapCenter[1]),
+            L.latLng(mapSize[0] - mapCenter[0], mapSize[1] - mapCenter[1])
+        ),
+    });
+    let oldlayer = null;
+    map.eachLayer(layer => {
+        oldlayer = layer
+    })
+    map.removeLayer(oldlayer)
+    map.addLayer(T);
+    return map
+}
+export { initmap, switch_map }

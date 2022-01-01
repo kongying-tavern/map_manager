@@ -8,7 +8,7 @@ const asyncRoutesChildren = [
     path: '/',
     name: 'home',
     meta: {
-      roles: ['ROLE_ADMIN', 'editor', 'test'],
+      roles: ['ROLE_ADMIN', 'admin', 'test'],
       title: '主页',
       icon: 'home',
       keepAlive: true

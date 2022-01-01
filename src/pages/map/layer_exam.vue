@@ -182,9 +182,9 @@ export default {
           align: "center",
         },
         {
-          name: "itemName",
+          name: "name",
           label: "点位类型",
-          field: "itemName",
+          field: "name",
           align: "center",
         },
         {

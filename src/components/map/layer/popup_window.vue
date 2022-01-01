@@ -65,7 +65,6 @@ export default {
   },
   props: ["layerdata", "map"],
   mounted() {
-    console.log(this.layerdata);
   },
   methods: {
     //将操作点位的数据传至vuex state

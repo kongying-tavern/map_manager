@@ -16,7 +16,7 @@ async function defalut_request(method, url, data = {}) {
                 'Content-Type': 'application/json',
                 'Authorization': localStorage.getItem('user_token')
             },
-            data: JSON.stringify({ ...data })
+            data: JSON.stringify(data)
         });
     } catch (error) {
         alert(error);
@@ -45,7 +45,7 @@ function map_item_handle(method, data, id = '') {
 }
 //地图点位类型启用/禁用
 function map_item_switch(id) {
-    return defalut_request('post ', `http://api.yuanshen.site:8089/api/basic/item/switch/${id}`);
+    return defalut_request('post', `http://api.yuanshen.site:8089/api/basic/item/switch/${id}`);
 }
 //地图点位查询
 function map_markers_select(id = "", keyword = "") {
@@ -60,6 +60,9 @@ function map_markers_signle_select(id) {
     return defalut_request('get', `http://api.yuanshen.site:8089/api/basic/marker/?markerId=${id}`)
 }
 //地图点位操作
+function map_markers_handle(method, data, id = '') {
+    return defalut_request(method, `http://api.yuanshen.site:8089/api/basic/marker/${id}`, data)
+}
 //地图点位启用/禁用
 function map_markers_switch(id) {
     return defalut_request('post', `http://api.yuanshen.site:8089/api/basic/marker/switch/${id}`);
@@ -73,5 +76,6 @@ export {
     map_item_switch,
     map_markers_select,
     map_markers_signle_select,
-    map_markers_switch
+    map_markers_switch,
+    map_markers_handle
 }

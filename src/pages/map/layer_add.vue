@@ -34,111 +34,42 @@
         >
       </q-inner-loading>
     </div>
+    <q-dialog v-model="layer_info_window" position="left">
+      <q-card>
+        <layer-info-window
+          :layerdata="layer_data"
+          :state="handle_state"
+          @callback="get_callback_data"
+        >
+        </layer-info-window>
+        <q-card-section style="padding-top: 0">
+          <q-btn
+            label="撤销新增点位"
+            color="red"
+            @click="remove_add_layer"
+            v-close-popup
+            v-show="handle_state == 2 ? false : true"
+          ></q-btn>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
     <!-- 右侧筛选器 -->
     <transition name="fade">
       <div class="selector_main" v-show="edit_state">
         <layer-select
           :refresh="refresh_trigger"
           :add_mode="add_mode"
-          @select_layer="layer_draw"
+          :map="map"
+          @area_data="get_area_data"
           @callback="layer_draw"
           @clear="clear_cache"
+          @focus_layer="focus_layer_popup"
         ></layer-select>
         <q-inner-loading :showing="selector_loading">
           <q-spinner-gears size="50px" color="primary" />
         </q-inner-loading>
       </div>
     </transition>
-    <!-- 点位弹窗 -->
-    <q-dialog v-model="layer_window">
-      <q-card>
-        <q-card-section>
-          <q-list bordered separator style="width: 500px">
-            <q-item>
-              <q-item-section> 点位描述 </q-item-section>
-              <q-item-section>
-                <q-input
-                  outlined
-                  v-model="layer_data.desc"
-                  placeholder="点位描述"
-                >
-                </q-input>
-              </q-item-section>
-            </q-item>
-            <q-item v-show="handle_state != 3 ? true : false">
-              <q-item-section> 点位图片 </q-item-section>
-              <q-item-section>
-                <q-img
-                  :src="show_img"
-                  class="layer_img"
-                  @click="upload_function"
-                >
-                  <template v-slot:error>
-                    <div
-                      class="
-                        absolute-full
-                        flex flex-center
-                        bg-primary
-                        text-white
-                      "
-                    >
-                      没有相关图片
-                    </div>
-                  </template>
-                </q-img>
-                <q-file
-                  v-show="false"
-                  ref="img_upload"
-                  v-model="upload_img"
-                  label="Standard"
-                  max-file-size="5242880"
-                  accept="image/png, image/jpeg"
-                  @rejected="onRejected"
-                />
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </q-card-section>
-        <q-card-section>
-          <q-btn
-            color="primary"
-            label="确认"
-            @click="update_add_layer(handle_state)"
-          />
-          <q-btn
-            v-show="this.handle_state == 1 ? true : false"
-            color="red"
-            text-color="white"
-            label="撤销新增"
-            @click="remove_add_layer"
-            v-close-popup
-            style="margin-left: 30px"
-          />
-          <q-btn
-            color="red"
-            v-show="this.handle_state != 1 ? true : false"
-            text-color="white"
-            label="删除点位"
-            v-close-popup
-            style="margin-left: 30px"
-          />
-          <q-btn
-            color="white"
-            text-color="primary"
-            label="关闭"
-            v-close-popup
-            style="margin-left: 30px"
-          />
-        </q-card-section>
-        <q-inner-loading :showing="add_loading">
-          <q-spinner-gears size="50px" color="primary" />
-        </q-inner-loading>
-      </q-card>
-    </q-dialog>
-    <!-- 图片裁剪弹窗 -->
-    <q-dialog v-model="cropper_window">
-      <img-cut :crooper_img="crooper_img" @screenshot="cut_img"></img-cut>
-    </q-dialog>
     <!-- 拖拽提示 -->
     <q-dialog v-model="drag_hint" seamless position="top">
       <q-card>
@@ -166,7 +97,7 @@
 <script>
 import Vue from "vue";
 import BaseContent from "../../components/BaseContent/BaseContent";
-import { initmap } from "../../api/map";
+import { initmap, switch_map } from "../../api/map";
 import {
   create_geojson,
   layer_register,
@@ -175,49 +106,42 @@ import {
 import { addlayer_handle } from "../../services/check_request";
 import LayerSelect from "../../components/map/layer/layer_select.vue";
 import PopupWindow from "../../components/map/layer/popup_window.vue";
-import ImgCut from "../../components/map/layer/img_crooper.vue";
+import LayerInfoWindow from "../../components/map/layer/layer_info_window.vue";
 import { icon_bg } from "../../api/layer";
 export default {
   data() {
     return {
       map: "",
       edit_state: true,
-      table_list_window: false,
       map_loading: false,
       layer_window: false,
       layer_data: {
         desc: "",
         img: "",
       },
-      item_id: null,
       item_list: null,
       add_mode: false,
       drag_mode: false,
       select_layer_data: null,
       select_layer_id: null,
       select_layer_object: null,
-      cropper_window: false,
       selector_loading: false,
-      show_img: require("../../assets/img/default.png"),
-      upload_img: null,
-      crooper_img: "",
       handle_state: "",
       drag_hint: false,
       add_loading: false,
-      right_card_state: {
-        selector: true,
-        table: true,
-      },
       selected_item_id: "",
       callback_layer: undefined,
       addlayer_cache: undefined,
       refresh_trigger: true,
+      layer_info_window: false,
+      area_data: "",
+      selected_popup_layer: null,
     };
   },
   components: {
     BaseContent,
     LayerSelect,
-    ImgCut,
+    LayerInfoWindow,
   },
   methods: {
     //提示
@@ -231,8 +155,14 @@ export default {
         timeout: time,
       });
     },
+    //获取要绘制的点位参数
     //在地图上绘制所选点位下的所有点位
     layer_draw(val) {
+      if (this.area_data.name == "渊下宫") {
+        switch_map(this.map, "YXG");
+      } else {
+        switch_map(this.map, "mainworld");
+      }
       if (val.data.length != 0) {
         this.select_layer_data = val;
         this.selector_loading = true;
@@ -265,45 +195,9 @@ export default {
         //在地图上挂载点位
         this.map.addLayer(this.callback_layer.select_Layer);
         this.selector_loading = false;
-      }
-    },
-    //触发选取文件事件
-    upload_function() {
-      //触发选取文件事件（框架自带的文件上传器难以定义样式，故直接调用事件）
-      this.$refs.img_upload.pickFiles();
-    },
-    //上传失败所用弹窗
-    onRejected(rejectedEntries) {
-      //上传类型检测
-      if (
-        rejectedEntries[0].file.type != "image/png" &&
-        rejectedEntries[0].file.type != "image/jpeg"
-      ) {
-        //提示弹窗
-        this.showNotif(`上传的不是图片类型文件，请确认后重新上传`);
       } else {
-        this.showNotif(`上传的图片文件不能大于2MB，请重新截图或压缩后再上传`);
+        this.map.removeLayer(this.callback_layer.select_Layer);
       }
-    },
-    //上传后图片转换为base64
-    file_switch() {
-      if (this.upload_img != null) {
-        let img = this.upload_img;
-        let fr = new FileReader();
-        fr.readAsDataURL(img);
-        fr.onload = (res) => {
-          this.crooper_img = res.target.result;
-          //在转换完成后清除file，否则当用户再次上传同一图片时，由于未触发model变化，会导致函数不被调用从而不弹出截图框
-          this.upload_img = null;
-        };
-        this.cropper_window = true;
-      }
-    },
-    //截图返回函数
-    cut_img(data) {
-      this.cropper_window = false;
-      this.show_img = data;
-      this.layer_data.img = data;
     },
     //单位操作弹窗函数
     //1，新增 2，修改
@@ -311,20 +205,12 @@ export default {
       this.handle_state = state;
       switch (state) {
         case 1:
-          this.layer_data = {
-            desc: "",
-            img: "",
-          };
-          this.show_img = require("../../assets/img/default.png");
-          this.layer_window = true;
+          this.layer_data = {};
+          this.layer_info_window = true;
           break;
         case 2:
-          this.layer_data = {
-            desc: data.properties.popupContent,
-            img: data.imgsrc,
-          };
-          this.show_img = data.imgsrc;
-          this.layer_window = true;
+          this.layer_data = data.data;
+          this.layer_info_window = true;
           break;
       }
     },
@@ -365,34 +251,29 @@ export default {
       layer.setIcon(new icondata({ ...layer_icondata.options }));
     },
     //提交新增点位
-    update_add_layer() {
-      let data = {
-        itemId: this.select_layer_id,
-        content: this.layer_data.desc,
-        title: "",
-        resourceBase64: this.layer_data.img,
-        position: this.select_layer_object.options.alt,
-        time: 0,
-      };
+    update_add_layer(data) {
       this.add_loading = true;
       addlayer_handle("put", {
         optionType: this.handle_state,
         punctuates: [data],
       }).then((res) => {
-        if (this.handle_state == 1) {
-          this.select_layer_object.off("click");
-        }
         this.add_loading = false;
         this.layer_window = false;
         if (res.data.data == true) {
           this.showNotif("操作成功!");
+          switch (this.handle_state) {
+            case 1:
+              this.refresh_trigger = !this.refresh_trigger;
+              this.addlayer_cache.removeLayer(this.select_layer_object);
+              break;
+          }
         } else {
           this.showNotif("操作失败!");
         }
       });
     },
     //删除缓存
-    clear_cache(){
+    clear_cache() {
       this.addlayer_cache.clearLayers();
     },
     //刷新点位
@@ -401,25 +282,60 @@ export default {
         this.refresh_trigger = !this.refresh_trigger;
       }
     },
+    get_callback_data(val) {
+      let data = {};
+      switch (this.handle_state) {
+        case 1:
+          data = {
+            itemId: this.select_layer_id,
+            content: val.content,
+            name: "",
+            resourceBase64:
+              val.resourceBase64 == null ? undefined : val.resourceBase64,
+            position: this.select_layer_object.options.alt,
+            time: 0,
+          };
+          break;
+        case 2:
+          data = {
+            itemId: this.select_layer_id,
+            content: val.content,
+            name: val.name,
+            resourceBase64:
+              val.resourceBase64 == null ? undefined : val.resourceBase64,
+            position: val.position,
+            time: 0,
+          };
+          break;
+      }
+      this.update_add_layer(data);
+      this.layer_info_window = false;
+    },
+    get_area_data(data) {
+      this.area_data = data;
+    },
+    focus_layer_popup(data) {
+      let list = this.callback_layer.select_Layer.getLayers();
+      for (let i of list) {
+        if (i.feature.id == data.id) {
+          i.openPopup();
+        }
+      }
+    },
   },
   mounted() {
     //注册地图
     this.map = initmap(this.map);
+    this.map.setView([3200, -3000], -3);
     //注册打点缓存组
     this.addlayer_cache = L.layerGroup();
   },
   watch: {
-    //检测文件上传事件（不使用@input，触发时间节点有差异，可能会导致奇怪的bug）
-    upload_img: function (val) {
-      if (val != null) {
-        this.file_switch();
-      }
-    },
     //检测弹窗产生的vuex变量变化，从而触发不同的事件
     "$store.state.layer_handel_data": function (val) {
       switch (val.handel_type) {
         case 1:
-          this.layer_modify(1, val.handel_data);
+          this.layer_modify(2, val.handel_data);
           break;
         case 2:
           this.layer_drag();
@@ -459,6 +375,7 @@ export default {
   position: relative;
   height: 91vh;
   background: rgba(85, 63, 63, 0.5);
+  cursor: pointer;
 }
 .edit_switch {
   position: absolute;
@@ -503,5 +420,8 @@ export default {
   text-decoration: none;
   font-weight: bold;
   background: transparent;
+}
+.leaflet-marker-pane img {
+  cursor: move;
 }
 </style>

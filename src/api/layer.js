@@ -64,7 +64,7 @@ function create_geojson(data) {
                 popTitle: i.title,
                 popupContent: i.content,
             },
-            icon_src: i.icon,
+            icon_src: i.icon == null ? 'https://assets.yuanshen.site/icons/7.png' : i.icon,
             imgsrc: i.resource,
             layer_id: i.mlayer,
             id: i.id,
@@ -127,7 +127,20 @@ function layergroup_register(layergroup_data, map) {
     L.geoJSON(layergroup_data, {
         pointToLayer: function (feature, latlng) {
             var key = feature.id;
-            var marker = layer_register(latlng, 'group', feature.check_in ? 'border_checking' : undefined, feature.layer_id, feature.icon_src);
+            let icontype = '';
+            switch (feature.data.status) {
+                case undefined:
+                    icontype = undefined;
+                    break;
+                case 0:
+                case 1:
+                    icontype = 'border_checking'
+                    break;
+                case 2:
+                    icontype = 'border_unsubmit'
+                    break;
+            }
+            var marker = layer_register(latlng, 'group', icontype, feature.layer_id, feature.icon_src);
             markers[key] = marker;
             return marker.addTo(layer_list.select_Layer);
         },

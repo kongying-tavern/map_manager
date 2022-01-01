@@ -105,18 +105,18 @@ export default {
                 expires: `${res.data.expires_in}s`,
               }
             );
-            this.$router.push("/").then((e) => {
-              this.$q.notify({
-                icon: "insert_emoticon",
-                message: "登录成功",
-                color: "green",
-                position: "top",
-                timeout: 1500,
-              });
-            });
             user_select().then((res) => {
               user_role_select(res.data.data.roles[0]).then((res) => {
                 localStorage.setItem("user_role", res.data.data.roleCode);
+                this.$router.push("/").then((e) => {
+                  this.$q.notify({
+                    icon: "insert_emoticon",
+                    message: "登录成功",
+                    color: "green",
+                    position: "top",
+                    timeout: 1500,
+                  });
+                });
               });
             });
           })

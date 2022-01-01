@@ -129,7 +129,7 @@
               <q-item-section>
                 <q-input
                   outlined
-                  v-model="selected_layer_data.title"
+                  v-model="selected_layer_data.name"
                   placeholder="点位名称"
                 >
                 </q-input>
@@ -201,6 +201,7 @@
             <q-btn
               color="primary"
               label="提交修改"
+              @click="edit_update"
               style="margin-right: 30px"
             ></q-btn>
             <q-btn v-close-popup label="取消"></q-btn>
@@ -227,6 +228,7 @@ import {
   map_markers_select,
   map_markers_switch,
   map_markers_signle_select,
+  map_markers_handle,
 } from "../../services/map_basic_request";
 import ImgCut from "../../components/map/layer/img_crooper.vue";
 export default {
@@ -247,9 +249,9 @@ export default {
           align: "center",
         },
         {
-          name: "title",
+          name: "name",
           label: "点位名称",
-          field: "title",
+          field: "name",
           align: "center",
         },
         {
@@ -373,6 +375,36 @@ export default {
       this.selected_layer_data = data;
       this.show_img = this.selected_layer_data.resource;
       this.selected_layer_window = true;
+    },
+    //修改上传
+    edit_update() {
+      console.log(this.selected_layer_data);
+      let update_data = [];
+      update_data.push({
+        content: this.selected_layer_data.content,
+        itemId: this.selected_layer_data.mitemId,
+        markerId: this.selected_layer_data.id,
+        position: this.selected_layer_data.position,
+        resource:
+          this.selected_layer_data.resource == null
+            ? undefined
+            : this.selected_layer_data.resource,
+        resourceBase64: this.selected_layer_data.resourceBase64,
+        version: this.selected_layer_data.version,
+        time: -1,
+      });
+      console.log(update_data);
+      map_markers_handle("post", update_data).then((res) => {
+        this.showNotif(res.data.msg);
+        this.selected_layer_window = false;
+        this.marker_select();
+      });
+    },
+    //删除点位
+    delete_marker(data) {
+      map_markers_handle("delete", undefined, data.id).then((res) => {
+        this.showNotif(res.data.msg);
+      });
     },
     //点位冻结/解冻
     data_freeze(data) {
